@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopwiz/commons/NavigationProvider.dart';
@@ -7,8 +8,11 @@ import 'package:shopwiz/pages/home/home.dart';
 import 'package:shopwiz/pages/authenticate/forgot_password.dart';
 import 'package:shopwiz/pages/authenticate/sign_in.dart';
 import 'package:shopwiz/pages/authenticate/register.dart';
-import 'package:shopwiz/pages/authenticate/loading_screen.dart';
+import 'package:shopwiz/shared/loading_screen.dart';
+import 'package:shopwiz/shared/wrapper.dart';
 import 'package:shopwiz/pages/profile/profile.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:shopwiz/firebase_options.dart';
 import 'package:shopwiz/pages/authenticate/authenticate.dart';
 
 class CustomPageTransitionsBuilder extends PageTransitionsBuilder {
@@ -23,9 +27,8 @@ class CustomPageTransitionsBuilder extends PageTransitionsBuilder {
     Widget child,
   ) {
     // Check if the route is for login, register, or forgot password screens
-    if (route.settings.name == '/sign_in' ||
-        route.settings.name == '/register' ||
-        route.settings.name == '/forgot_password' ) {
+    if (route.settings.name == '/register' ||
+        route.settings.name == '/forgot_password') {
       // Apply a slide transition from right to left for these screens
       return SlideTransition(
         position: Tween<Offset>(
@@ -41,10 +44,20 @@ class CustomPageTransitionsBuilder extends PageTransitionsBuilder {
   }
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => BottomNavigationBarModel(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          // to prevent user logout when restart device
+            create: (_) => CustomAuthProvider()..checkUserLoggedIn()),
+        ChangeNotifierProvider(create: (_) => BottomNavigationBarModel()),
+      ],
       child: MyApp(),
     ),
   );
@@ -53,8 +66,10 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => BottomNavigationBarModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => BottomNavigationBarModel()),
+      ],
       child: MaterialApp(
         title: 'ShopWiz',
         theme: ThemeData(
@@ -69,6 +84,8 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: '/loading',
         routes: {
+          '/authenticate': (context) => Authenticate(),
+          '/wrapper': (context) => Wrapper(),
           '/loading': (context) => LoadingScreen(),
           '/sign_in': (context) => SignInScreen(),
           '/register': (context) => RegisterScreen(),

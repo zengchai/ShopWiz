@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:163693958702:android:126181f4e83c47c57c31bf",
+        "mobilesdk_app_id": "1:163693958702:android:60979d3b6fd3b8177c31bf",
         "android_client_info": {
-          "package_name": "com.example.vitacare"
+          "package_name": "com.example.shopwiz"
         }
       },
       "oauth_client": [],

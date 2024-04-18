@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shopwiz/commons/BaseLayout.dart';
+import 'package:shopwiz/commons/NavigationProvider.dart';
+import 'package:shopwiz/pages/authenticate/authenticate.dart';
 import 'package:shopwiz/pages/profile/edit_profile.dart';
+import 'package:shopwiz/services/auth.dart';
+import 'package:shopwiz/services/database.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -8,16 +13,89 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  void editProfile() {
+  final AuthService _auth = AuthService();
+  late Future<Map<String, dynamic>> _userDataFuture =
+      {} as Future<Map<String, dynamic>>;
+  late Map<String, dynamic> userData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _userDataFuture = loadData();
+  }
+
+  Future<Map<String, dynamic>> loadData() async {
+    String uid = _auth.getCurrentUser().uid;
+    userData = await DatabaseService(uid: uid).getUserData();
+    print("User Data: $userData"); // Add this line to check the userData
+    if (mounted) {
+      setState(() {
+        this.userData = userData;
+      });
+    }
+    return userData;
+  }
+
+  // Future<void> editProfile() async {
+  //   // Navigate to edit profile screen
+  //   final result = await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => EditProfileScreen()),
+  //   );
+
+  //   if (result != null) {
+  //     setState(() {
+  //       userData['username'] = result['username'];
+  //       userData['phonenum'] = result['phonenum'];
+  //     });
+  //   }
+  // }
+
+  Future<void> editProfile() async {
     // Navigate to edit profile screen
-    Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => EditProfileScreen()),
     );
+
+    if (result != null) {
+      setState(() {
+        _userDataFuture = loadData();
+      });
+    }
+  }
+
+  void signOut() async {
+    await _auth.signOut();
+    Provider.of<CustomAuthProvider>(context, listen: false).signOut();
+    // Navigation Bar ============================
+    // Reset the selected index to 0
+    Provider.of<BottomNavigationBarModel>(context, listen: false)
+        .updateSelectedIndex(0);
+    Navigator.pushReplacementNamed(context, '/sign_in');
   }
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _userDataFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else {
+          final userData = snapshot.data!;
+          bool isAdmin = userData['uid'] == '7aXevcNf3Cahdmk9l5jLRASw5QO2';
+
+          return isAdmin ? adminLayout(userData) : customerLayout(userData);
+        }
+      },
+    );
+  }
+
+  //admin profile
+  Widget adminLayout(Map<String, dynamic> userData) {
     return BaseLayout(
       child: SingleChildScrollView(
         child: Center(
@@ -40,7 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(height: 30.0),
                 Center(
                   child: CircleAvatar(
-                    radius: 50.0,
+                    radius: 70.0,
                     backgroundImage:
                         AssetImage('assets/images/profile_pic.jpg'),
                   ),
@@ -52,43 +130,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Username'),
-                      Container(
-                        width: 350.0,
-                        child: TextFormField(
-                          readOnly: true,
-                          initialValue: 'JohnDoe123',
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
+                      TextField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                            text: userData['username'] ?? ''),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0),
                           ),
                         ),
                       ),
                       SizedBox(height: 16.0),
                       Text('Email'),
-                      Container(
-                        width: 350.0,
-                        child: TextFormField(
-                          readOnly: true,
-                          initialValue: 'johndoe@example.com',
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
+                      TextField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                            text: userData['email'] ?? ''),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.0),
+                      SizedBox(height: 16.0),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 100.0),
+                Container(
+                  width: 150.0,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: signOut,
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.red,
+                    ),
+                    child: Text(
+                      'Sign Out',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+//customer profile
+  Widget customerLayout(Map<String, dynamic> userData) {
+    return BaseLayout(
+      child: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16.0, 15.0, 16.0, 0.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: Text(
+                      'Profile',
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 30.0),
+                Center(
+                  child: CircleAvatar(
+                    radius: 70.0,
+                    backgroundImage: userData['imageUrl'] != null
+                        ? NetworkImage(userData['imageUrl']) as ImageProvider
+                        : AssetImage('assets/images/default_profile_image.jpg'),
+                  ),
+                ),
+                SizedBox(height: 30.0),
+                Container(
+                  width: 350.0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Username'),
+                      TextField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                            text: userData['username'] ?? ''),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.0),
+                      Text('Email'),
+                      TextField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                            text: userData['email'] ?? ''),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0),
                           ),
                         ),
                       ),
                       SizedBox(height: 16.0),
                       Text('Phone Number'),
-                      Container(
-                        width: 350.0,
-                        child: TextFormField(
-                          readOnly: true,
-                          initialValue: '0107981891',
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
+                      TextField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                            text: userData['phonenum'] ?? ''),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0),
                           ),
                         ),
                       ),
@@ -101,7 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 350.0,
+                      width: 150.0,
                       height: 50,
                       child: ElevatedButton(
                         onPressed: editProfile,
@@ -110,6 +269,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Text(
                           'Edit Profile',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 20),
+                    Container(
+                      width: 150.0,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: signOut,
+                        style: ElevatedButton.styleFrom(
+                          primary: Colors.red,
+                        ),
+                        child: Text(
+                          'Sign Out',
                           style: TextStyle(color: Colors.white),
                         ),
                       ),

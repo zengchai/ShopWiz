@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   @override
@@ -6,13 +7,59 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   String email = '';
+  bool isLoading = false;
+
+  void resetPassword() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // Email format validation
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a valid email address.'),
+        ),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password reset email sent. Please check your email.'),
+        ),
+      );
+
+      // Navigate back to the sign-in page
+      Navigator.pop(context);
+    } catch (e) {
+      print('Error sending password reset email: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Error sending password reset email. Please try again later.'),
+        ),
+      );
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(''),
+        title: Text('Forgot Password'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -62,16 +109,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     width: 350.0,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Add login functionality here
-                      },
+                      onPressed: isLoading ? null : () => resetPassword(),
                       style: ElevatedButton.styleFrom(
                         primary: Color.fromARGB(255, 108, 74, 255),
                       ),
-                      child: Text(
-                        'Confirm',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: isLoading
+                          ? CircularProgressIndicator()
+                          : Text(
+                              'Confirm',
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ),
                 ],

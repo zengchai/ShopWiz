@@ -1,29 +1,59 @@
-// import 'package:flutter/material.dart';
-// import 'package:shopwiz/pages/authenticate/forgot_password.dart';
-// import 'package:shopwiz/pages/authenticate/sign_in.dart';
-// import 'package:shopwiz/pages/authenticate/register.dart';
-// import 'package:shopwiz/pages/authenticate/loading_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shopwiz/pages/authenticate/sign_in.dart';
+import 'package:shopwiz/pages/authenticate/register.dart';
+import 'package:shopwiz/pages/home/home.dart';
+import 'package:shopwiz/shared/wrapper.dart';
 
-// final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+class CustomAuthProvider extends ChangeNotifier {
+  bool _isSignedIn = false;
+  bool _isRegistering = false;
 
-// class Authenticate {
-//   static Route<dynamic> generateRoute(RouteSettings settings) {
-//     switch (settings.name) {
-//       case '/loading':
-//         return MaterialPageRoute(builder: (_) => LoadingScreen());
-//       case '/sign_in':
-//         return MaterialPageRoute(builder: (_) => SignInScreen());
-//       case '/register':
-//         return MaterialPageRoute(builder: (_) => RegisterScreen());
-//       case '/forgot_password':
-//         return MaterialPageRoute(builder: (_) => ForgotPasswordScreen());
-//       default:
-//         return MaterialPageRoute(builder: (_) => LoadingScreen());
-//     }
-//   }
+  bool get isSignedIn => _isSignedIn;
+  bool get isRegistering => _isRegistering;
 
-//   static bool shouldShowNavigationBar(String routeName) {
-//     List<String> excludedRoutes = ['/loading', '/sign_in', '/register', '/forgot_password'];
-//     return !excludedRoutes.contains(routeName);
-//   }
-// }
+  void toggleRegistering(bool value) {
+    _isRegistering = value;
+    notifyListeners();
+  }
+
+  //THESE are to make sure the account still logged in even user go to android home
+  Future<void> checkUserLoggedIn() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _isSignedIn = prefs.getBool('isSignedIn') ?? false;
+    notifyListeners();
+  }
+
+  Future<void> signIn() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _isSignedIn = true;
+    await prefs.setBool('isSignedIn', true);
+    await prefs.setBool('isRegistering', true);
+    notifyListeners();
+  }
+
+  Future<void> signOut() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _isSignedIn = false;
+    await prefs.setBool('isSignedIn', false);
+    notifyListeners();
+  }
+}
+
+class Authenticate extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<CustomAuthProvider>(context);
+    //To prevent go back to sign in screenby clicking go back to android home
+    if (authProvider.isSignedIn) {
+      return HomeScreen();
+    } else if (authProvider.isSignedIn && !authProvider.isRegistering) {
+      return HomeScreen();
+    } else if (authProvider.isRegistering) {
+      return RegisterScreen();
+    } else {
+      return SignInScreen();
+    }
+  }
+}
