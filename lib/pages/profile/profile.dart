@@ -36,21 +36,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return userData;
   }
 
-  // Future<void> editProfile() async {
-  //   // Navigate to edit profile screen
-  //   final result = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => EditProfileScreen()),
-  //   );
-
-  //   if (result != null) {
-  //     setState(() {
-  //       userData['username'] = result['username'];
-  //       userData['phonenum'] = result['phonenum'];
-  //     });
-  //   }
-  // }
-
   Future<void> editProfile() async {
     // Navigate to edit profile screen
     final result = await Navigator.push(
@@ -73,6 +58,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Provider.of<BottomNavigationBarModel>(context, listen: false)
         .updateSelectedIndex(0);
     Navigator.pushReplacementNamed(context, '/sign_in');
+  }
+
+  void deleteProfile(BuildContext context) async {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete'),
+          content: Text('Are you sure you want to delete your profile?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close the dialog
+                AuthService authService = AuthService();
+                DatabaseService databaseService =
+                    DatabaseService(uid: authService.getCurrentUser().uid);
+
+                // Delete user data from Firestore
+                await databaseService.deleteUserData();
+
+                // Delete user account from Firebase Auth
+                await authService.deleteUser();
+
+                // Navigation Bar ============================
+                // Reset the selected index to 0
+                Provider.of<BottomNavigationBarModel>(context, listen: false)
+                    .updateSelectedIndex(0);
+
+                // Navigate back to sign in page using NavigatorState
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/sign_in',
+                  (Route<dynamic> route) => false,
+                );
+              },
+              child: Text('Confirm'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -278,9 +310,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: 150.0,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: signOut,
+                        onPressed: () => deleteProfile(context),
                         style: ElevatedButton.styleFrom(
                           primary: Colors.red,
+                        ),
+                        child: Text(
+                          'Delete Account',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 320.0,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: signOut,
+                        style: ElevatedButton.styleFrom(
+                          primary: Color.fromARGB(255, 122, 122, 122),
                         ),
                         child: Text(
                           'Sign Out',

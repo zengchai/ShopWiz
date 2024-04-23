@@ -92,4 +92,14 @@ class DatabaseService {
       return null;
     }
   }
+
+  // Delete user
+  Future<void> deleteUserData() async {
+  try {
+    await usersCollection.doc(uid).delete();
+  } catch (e) {
+    print('Error deleting user data: $e');
+    throw Exception('Error deleting user data');
+  }
+}
 }
