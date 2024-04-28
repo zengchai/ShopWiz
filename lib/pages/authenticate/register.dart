@@ -227,7 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: ElevatedButton(
                           onPressed: isLoading ? null : () => register(),
                           style: ElevatedButton.styleFrom(
-                            primary: Color.fromARGB(255, 108, 74, 255),
+                            backgroundColor: Color.fromARGB(255, 108, 74, 255),
                           ),
                           child: isLoading
                               ? CircularProgressIndicator()
