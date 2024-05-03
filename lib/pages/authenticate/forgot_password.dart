@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   @override
@@ -111,7 +111,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     child: ElevatedButton(
                       onPressed: isLoading ? null : () => resetPassword(),
                       style: ElevatedButton.styleFrom(
-                        primary: Color.fromARGB(255, 108, 74, 255),
+                        backgroundColor: Color.fromARGB(255, 108, 74, 255),
                       ),
                       child: isLoading
                           ? CircularProgressIndicator()

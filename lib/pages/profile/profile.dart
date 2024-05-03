@@ -196,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: ElevatedButton(
                     onPressed: signOut,
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.red,
+                      backgroundColor: Colors.red,
                     ),
                     child: Text(
                       'Sign Out',
@@ -297,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ElevatedButton(
                         onPressed: editProfile,
                         style: ElevatedButton.styleFrom(
-                          primary: Color.fromARGB(255, 108, 74, 255),
+                          backgroundColor: Color.fromARGB(255, 108, 74, 255),
                         ),
                         child: Text(
                           'Edit Profile',
@@ -312,7 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ElevatedButton(
                         onPressed: () => deleteProfile(context),
                         style: ElevatedButton.styleFrom(
-                          primary: Colors.red,
+                          backgroundColor: Colors.red,
                         ),
                         child: Text(
                           'Delete Account',
@@ -332,7 +332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ElevatedButton(
                         onPressed: signOut,
                         style: ElevatedButton.styleFrom(
-                          primary: Color.fromARGB(255, 122, 122, 122),
+                          backgroundColor: Color.fromARGB(255, 122, 122, 122),
                         ),
                         child: Text(
                           'Sign Out',

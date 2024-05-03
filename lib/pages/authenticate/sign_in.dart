@@ -170,7 +170,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : () => signIn(),
                         style: ElevatedButton.styleFrom(
-                          primary: Color.fromARGB(255, 108, 74, 255),
+                          backgroundColor: Color.fromARGB(255, 108, 74, 255),
                         ),
                         child: isLoading
                             ? CircularProgressIndicator()
