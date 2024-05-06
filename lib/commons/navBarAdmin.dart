@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopwiz/commons/NavigationProvider.dart';
 
-class CustomBottomNavigationBar extends StatefulWidget {
+class CustomBottomAdminNavigationBar extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
-  CustomBottomNavigationBar({
+  CustomBottomAdminNavigationBar({
     required this.selectedIndex,
     required this.onItemTapped,
   });
 
   @override
-  _CustomBottomNavigationBarState createState() =>
-      _CustomBottomNavigationBarState();
+  _CustomBottomAdminNavigationBarState createState() =>
+      _CustomBottomAdminNavigationBarState();
 }
 
-class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
+class _CustomBottomAdminNavigationBarState extends State<CustomBottomAdminNavigationBar> {
   late PageController _pageController;
   int _selectedIndex = 0;
 
@@ -52,11 +52,11 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.explore),
+          icon: Icon(Icons.inventory),
           label: 'Stock',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.reorder),
+          icon: Icon(Icons.description),
           label: 'Order',
         ),
         BottomNavigationBarItem(
@@ -77,10 +77,10 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
             Navigator.pushReplacementNamed(context, '/home');
             break;
           case 1:
-            Navigator.pushReplacementNamed(context, '/explore');
+            Navigator.pushReplacementNamed(context, '/stock');
             break;
           case 2:
-            Navigator.pushReplacementNamed(context, '/cart');
+            Navigator.pushReplacementNamed(context, '/order');
             break;
           case 3:
             Navigator.pushReplacementNamed(context, '/profile');

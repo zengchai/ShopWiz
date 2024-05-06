@@ -1,18 +1,20 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopwiz/commons/NavigationProvider.dart';
+import 'package:shopwiz/firebase_options.dart';
+import 'package:shopwiz/pages/authenticate/authenticate.dart';
+import 'package:shopwiz/pages/authenticate/forgot_password.dart';
+import 'package:shopwiz/pages/authenticate/register.dart';
+import 'package:shopwiz/pages/authenticate/sign_in.dart';
 import 'package:shopwiz/pages/cart/cart_page.dart';
 import 'package:shopwiz/pages/explore/explore_page.dart';
 import 'package:shopwiz/pages/home/home.dart';
-import 'package:shopwiz/pages/authenticate/forgot_password.dart';
-import 'package:shopwiz/pages/authenticate/sign_in.dart';
-import 'package:shopwiz/pages/authenticate/register.dart';
+import 'package:shopwiz/pages/order/order_page.dart';
+import 'package:shopwiz/pages/profile/profile.dart';
+import 'package:shopwiz/pages/stock/stock_page.dart';
 import 'package:shopwiz/shared/loading_screen.dart';
 import 'package:shopwiz/shared/wrapper.dart';
-import 'package:shopwiz/pages/profile/profile.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:shopwiz/firebase_options.dart';
-import 'package:shopwiz/pages/authenticate/authenticate.dart';
 
 class CustomPageTransitionsBuilder extends PageTransitionsBuilder {
   const CustomPageTransitionsBuilder();
@@ -53,7 +55,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          // to prevent user logout when restart device
+            // to prevent user logout when restart device
             create: (_) => CustomAuthProvider()..checkUserLoggedIn()),
         ChangeNotifierProvider(create: (_) => BottomNavigationBarModel()),
       ],
@@ -93,6 +95,8 @@ class MyApp extends StatelessWidget {
           '/cart': (context) => CartScreen(),
           '/home': (context) => HomeScreen(),
           '/profile': (context) => ProfileScreen(),
+          '/order': (context) => OrderScreen(),
+          '/stock': (context) => StockScreen(),
         },
       ),
     );
