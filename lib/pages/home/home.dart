@@ -68,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
         : BaseLayoutAdmin(
             // ignore: sort_child_properties_last
             child: Column(
-              // The outermost parent should be a single widget
               children: [
                 const SizedBox(height: 20),
                 const Padding(
@@ -78,7 +77,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [],
                   ),
                 ),
-                ProductScreen(), // Include ProductScreen within the Column
+                Expanded(
+                  // Ensures ProductScreen has appropriate space in the Column
+                  child:
+                      ProductScreen(), // Include ProductScreen within the Column
+                ),
               ],
             ),
             floatingActionButton: FloatingActionButton.extended(
@@ -93,7 +96,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddProductDialog(BuildContext context) {
-    final DatabaseService _databaseService = DatabaseService(uid: '');
+    final DatabaseService _databaseService =
+        DatabaseService(uid: ''); // Database service
+
+    final GlobalKey<FormState> _formKey =
+        GlobalKey<FormState>(); // For input validation
 
     final TextEditingController productNameController = TextEditingController();
     final TextEditingController productPriceController =
@@ -120,141 +127,184 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          child: SingleChildScrollView(
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Add Product',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Close dialog
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: pickImage, // Allows image selection
-                    child: Container(
-                      height: 100,
-                      width: 100,
-                      color: Colors.grey,
-                      child: selectedImage != null
-                          ? Image.file(selectedImage!,
-                              fit: BoxFit.cover) // Show image
-                          : const Text('Product Image',
-                              textAlign: TextAlign.center),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: productNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Product Name',
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: productPriceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Product Price',
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: productQuantityController,
-                    decoration: const InputDecoration(
-                      labelText: 'Product Quantity',
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: productCategoryController,
-                    decoration: const InputDecoration(
-                      labelText: 'Product Category',
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: productDescriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Product Description',
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final String pid = FirebaseFirestore.instance
-                          .collection('products')
-                          .doc()
-                          .id;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey, // Use a form key for validation
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Add Product',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        GestureDetector(
+                          onTap: () async {
+                            await pickImage(); // Select the image
+                            setState(() {}); // Update the UI
+                          },
+                          child: Container(
+                            height: 100,
+                            width: 100,
+                            color: Colors.grey,
+                            child: selectedImage != null
+                                ? Image.file(selectedImage!, fit: BoxFit.cover)
+                                : const Center(
+                                    child: Text(
+                                        'Product Image'), // Placeholder if no image
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: productNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Product Name',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the product name';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: productPriceController,
+                          decoration: const InputDecoration(
+                            labelText: 'Product Price',
+                          ),
+                          keyboardType:
+                              TextInputType.numberWithOptions(decimal: true),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the product price';
+                            }
+                            final double? price = double.tryParse(value);
+                            if (price == null) {
+                              return 'Please enter a valid price';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: productQuantityController,
+                          decoration: const InputDecoration(
+                            labelText: 'Product Quantity',
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the product quantity';
+                            }
+                            final int? quantity = int.tryParse(value);
+                            if (quantity == null) {
+                              return 'Please enter a valid quantity';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: productCategoryController,
+                          decoration: const InputDecoration(
+                            labelText: 'Product Category',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the product category';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: productDescriptionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Product Description',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the product description';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (!_formKey.currentState!.validate()) {
+                              return; // Exit if the form is not valid
+                            }
 
-                      final String pname = productNameController.text;
-                      final double pprice =
-                          double.tryParse(productPriceController.text) ?? 0.0;
-                      final int pquantity =
-                          int.tryParse(productQuantityController.text) ?? 0;
-                      final String pcategory = productCategoryController.text;
-                      final String pdescription =
-                          productDescriptionController.text;
+                            final String pid = FirebaseFirestore.instance
+                                .collection('products')
+                                .doc()
+                                .id; // Create a new product ID
+                            final String pname = productNameController.text;
+                            final double pprice =
+                                double.tryParse(productPriceController.text) ??
+                                    0.0;
+                            final int pquantity =
+                                int.tryParse(productQuantityController.text) ??
+                                    0;
+                            final String pcategory =
+                                productCategoryController.text;
+                            final String pdescription =
+                                productDescriptionController.text;
 
-                      if (selectedImage != null) {
-                        // Upload the product image
-                        final String? imageUrl = await _databaseService
-                            .uploadProductImage(selectedImage!, pid);
+                            if (selectedImage != null) {
+                              final String? imageUrl = await _databaseService
+                                  .uploadProductImage(selectedImage!, pid);
 
-                        if (imageUrl != null) {
-                          // Create the product with the uploaded image
-                          await _databaseService.createProduct(
-                            pid,
-                            pname,
-                            pprice,
-                            pquantity,
-                            pcategory,
-                            pdescription,
-                            imageUrl,
-                          );
+                              if (imageUrl != null) {
+                                await _databaseService.createProduct(
+                                  pid,
+                                  pname,
+                                  pprice,
+                                  pquantity,
+                                  pcategory,
+                                  pdescription,
+                                  imageUrl,
+                                );
 
-                          print("Product created successfully");
-                        } else {
-                          print("Failed to upload image");
-                        }
-                      } else {
-                        print("No image selected");
-                      }
+                                print("Product created successfully");
+                              } else {
+                                print("Failed to upload image");
+                              }
+                            } else {
+                              print("No image selected");
+                            }
 
-                      Navigator.of(context).pop(); // Close dialog
-                    },
-                    child: const Text('Add Product'),
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: const Text('Add Product'),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -363,12 +413,8 @@ class ProductScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Products"),
-      ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future:
-            _dbService.retrieveProductList(), // Fetch products from Firebase
+        future: _dbService.retrieveProductList(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -384,60 +430,88 @@ class ProductScreen extends StatelessWidget {
             );
           } else if (snapshot.hasData) {
             List<Product> products = snapshot.data!.map((data) {
-              return Product.fromMap(data); // Create Product from Firebase data
+              return Product.fromMap(data);
             }).toList();
 
             return ListView.builder(
               itemCount: products.length,
               itemBuilder: (context, index) {
                 final product = products[index];
+
                 return Container(
                   margin: const EdgeInsets.all(10),
-                  padding: const EdgeInsets.all(10),
-                  color: Colors.white,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: MediaQuery.of(context).size.width * 0.25,
-                        child: Image.network(
-                          product.pimageUrl,
-                          fit: BoxFit.cover, // Display the product image
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              product.pname,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                                'Price: \$${product.pprice.toStringAsFixed(2)}'),
-                            Text('Stock: ${product.pquantity}'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          _showEditProductDialog(
-                              context, product); // Open edit dialog
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          _showDeleteConfirmationDialog(context,
-                              product); // Open delete confirmation dialog
-                        },
+                  // Define a specific width to reduce the container size
+                  width: MediaQuery.of(context).size.width *
+                      0.9, // 90% of the screen width
+                  decoration: BoxDecoration(
+                    color: Colors.white, // Background color
+                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5), // Shadow color
+                        spreadRadius: 3, // Spread of shadow
+                        blurRadius: 5, // Blurring effect
+                        offset:
+                            const Offset(0, 3), // Position of the shadow (x, y)
                       ),
                     ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(
+                        10), // Padding inside the container
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Smaller container width to fit within reduced container size
+                        Container(
+                          width: MediaQuery.of(context).size.width *
+                              0.2, // 20% of screen width
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                                10), // Match outer border radius
+                            child: Image.network(
+                              product.pimageUrl,
+                              fit: BoxFit
+                                  .cover, // Ensure the image covers the container
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                            width: 10), // Space between image and text
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product.pname,
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                  'Price: \$${product.pprice.toStringAsFixed(2)}'),
+                              Text('Stock: ${product.pquantity}'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                            width: 10), // Space between text and buttons
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            _showEditProductDialog(
+                                context, product); // Open edit dialog
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            _showDeleteConfirmationDialog(
+                                context, product); // Open delete confirmation
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

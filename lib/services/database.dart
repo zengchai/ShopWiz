@@ -13,6 +13,8 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('users');
   final CollectionReference productsCollection =
       FirebaseFirestore.instance.collection('products');
+  final CollectionReference storesCollection =
+      FirebaseFirestore.instance.collection('stores');
 
   Future<void> setUserData(
       String username, String email, String phonenum, String uid) async {
@@ -101,6 +103,59 @@ class DatabaseService {
     } catch (e) {
       print('Error deleting user data: $e');
       throw Exception('Error deleting user data');
+    }
+  }
+
+//Create store
+  Future<void> createStore(
+    String sname,
+    String saddress,
+    String imagePath,
+  ) async {
+    try {
+      // Query to check if the store with the given name exists
+      QuerySnapshot existingStores = await storesCollection
+          .where('sname', isEqualTo: sname) // Checking by store name
+          .get();
+
+      if (existingStores.docs.isNotEmpty) {
+        print("Store already exists with the name: $sname");
+        return; // If a store with the same name exists, do not create a new one
+      }
+
+      // Generate a unique store ID
+      String sid = storesCollection.doc().id;
+
+      // Load the image from the specified path
+      File imageFile = File(imagePath);
+
+      // Upload the image to Firebase Storage
+      Reference storageRef =
+          FirebaseStorage.instance.ref().child('StoreImages/$sid.jpg');
+      await storageRef.putFile(imageFile);
+      String simageUrl = await storageRef.getDownloadURL();
+
+      // Get all products to include in the store document
+      List<Map<String, dynamic>> productList = [];
+      QuerySnapshot productSnapshot = await productsCollection.get();
+
+      for (var doc in productSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        productList.add(data);
+      }
+
+      // Create the store document in Firestore
+      await storesCollection.doc(sid).set({
+        'sid': sid,
+        'sname': sname,
+        'saddress': saddress,
+        'simageurl': simageUrl,
+        'products': productList, // Include all products in the store
+      });
+
+      print("Store created successfully");
+    } catch (e) {
+      print("Error creating store: $e");
     }
   }
 
