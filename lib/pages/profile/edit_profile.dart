@@ -338,7 +338,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           child: ElevatedButton(
                             onPressed: saveChanges,
                             style: ElevatedButton.styleFrom(
-                              primary: Color.fromARGB(255, 108, 74, 255),
+                              backgroundColor: Color.fromARGB(255, 108, 74, 255),
                             ),
                             child: isSavingChanges
                                 ? CircularProgressIndicator()
