@@ -49,7 +49,7 @@ class Authenticate extends StatelessWidget {
     final authProvider = Provider.of<CustomAuthProvider>(context);
     //To prevent go back to sign in screenby clicking go back to android home
     if (authProvider.isSignedIn) {
-      return HomeScreen();  
+      return SignInScreen();  
     } else if (authProvider.isSignedIn && !authProvider.isRegistering) {
       return HomeScreen();
     } else if (authProvider.isRegistering) {

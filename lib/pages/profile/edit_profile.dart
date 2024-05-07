@@ -43,20 +43,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     String uid = _auth.getCurrentUser().uid;
     userData = await DatabaseService(uid: uid).getUserData();
     print("User Data: $userData"); // Add this line to check the userData
-    if (mounted) {
-      setState(() {
-        this.userData = userData;
-        newUsername = userData['username'] ?? 'Anonymous';
-        newPhoneNumber = userData['phonenum'] ?? 'No Phone Number';
-        newPassword = '';
-        confirmPassword = '';
-        usernameController = TextEditingController(text: newUsername);
-        phoneNumberController = TextEditingController(text: newPhoneNumber);
-        newPasswordController = TextEditingController(text: newPassword);
-        confirmPasswordController =
-            TextEditingController(text: confirmPassword);
-      });
-    }
+    setState(() {
+      this.userData = userData;
+      newUsername = userData['username'] ?? 'Anonymous';
+      newPhoneNumber = userData['phonenum'] ?? 'No Phone Number';
+      newPassword = '';
+      confirmPassword = '';
+      usernameController = TextEditingController(text: newUsername);
+      phoneNumberController = TextEditingController(text: newPhoneNumber);
+      newPasswordController = TextEditingController(text: newPassword);
+      confirmPasswordController = TextEditingController(text: confirmPassword);
+    });
     return userData;
   }
 
