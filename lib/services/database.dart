@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/services.dart';
 
 class DatabaseService {
   final String uid;
@@ -113,36 +114,34 @@ class DatabaseService {
     String imagePath,
   ) async {
     try {
-      // Query to check if the store with the given name exists
+      // Check if the store already exists in Firestore
       QuerySnapshot existingStores = await storesCollection
           .where('sname', isEqualTo: sname) // Checking by store name
           .get();
 
       if (existingStores.docs.isNotEmpty) {
         print("Store already exists with the name: $sname");
-        return; // If a store with the same name exists, do not create a new one
+        return; // Exit if the store already exists
+      }
+
+      // Check if the image file exists
+      Uint8List imageBytes = await _getImageAssetBytes(imagePath);
+      if (imageBytes.isEmpty) {
+        print("Image file does not exist at path: $imagePath");
+        return; // If the file doesn't exist, stop the process
       }
 
       // Generate a unique store ID
       String sid = storesCollection.doc().id;
 
-      // Load the image from the specified path
-      File imageFile = File(imagePath);
-
       // Upload the image to Firebase Storage
       Reference storageRef =
           FirebaseStorage.instance.ref().child('StoreImages/$sid.jpg');
-      await storageRef.putFile(imageFile);
-      String simageUrl = await storageRef.getDownloadURL();
+      UploadTask uploadTask = storageRef.putData(imageBytes);
 
-      // Get all products to include in the store document
-      List<Map<String, dynamic>> productList = [];
-      QuerySnapshot productSnapshot = await productsCollection.get();
-
-      for (var doc in productSnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        productList.add(data);
-      }
+      // Get the download URL for the uploaded image
+      TaskSnapshot storageTaskSnapshot = await uploadTask;
+      String simageUrl = await storageTaskSnapshot.ref.getDownloadURL();
 
       // Create the store document in Firestore
       await storesCollection.doc(sid).set({
@@ -150,13 +149,214 @@ class DatabaseService {
         'sname': sname,
         'saddress': saddress,
         'simageurl': simageUrl,
-        'products': productList, // Include all products in the store
+        'products': [], // Initialize products list to empty
       });
+      await updateStoreProduct(); // Update store products after store creation
 
       print("Store created successfully");
     } catch (e) {
       print("Error creating store: $e");
     }
+  }
+
+  Future<void> updateStoreProduct() async {
+    try {
+      // Get products from productsCollection
+      QuerySnapshot productSnapshot = await productsCollection.get();
+
+      // Get all stores
+      QuerySnapshot storeSnapshot = await storesCollection.get();
+
+      // Update each store with the latest products
+      for (var storeDoc in storeSnapshot.docs) {
+        List<Map<String, dynamic>> existingProducts =
+            List.from(storeDoc['products']);
+
+        // Update existing products with the latest product list
+        for (var productDoc in productSnapshot.docs) {
+          String pid = productDoc['pid'] ?? '';
+          String pname = productDoc['pname'] ?? '';
+          bool found = false;
+
+          // Update product information in existing products list
+          for (var existingProduct in existingProducts) {
+            if (existingProduct['pid'] == pid) {
+              existingProduct['pname'] = pname; // Update product name
+              found = true;
+              break;
+            }
+          }
+          existingProducts.removeWhere((product) => productSnapshot.docs
+              .every((productDoc) => productDoc['pid'] != product['pid']));
+
+          // If the product is not found in existing products, add it
+          if (!found) {
+            existingProducts.add({
+              'pid': pid,
+              'pname': pname,
+              'storestock': 0, // Initialize storestock to zero
+            });
+          }
+        }
+
+        // Update the store document with the updated products list
+        await storeDoc.reference.update({'products': existingProducts});
+      }
+
+      print("Store products updated successfully");
+    } catch (e) {
+      print("Error updating store products: $e");
+    }
+  }
+
+// retrieve list of store
+  Stream<List<Map<String, dynamic>>> getAllStores() {
+    try {
+      return storesCollection.snapshots().map((querySnapshot) {
+        List<Map<String, dynamic>> storeList = [];
+
+        // Loop through each document and add to store list
+        for (var doc in querySnapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>?;
+          if (data != null) {
+            data['sid'] = doc.id;
+            storeList.add(data); // Create Store object and add to list
+          }
+        }
+
+        return storeList; // Return the list of stores
+      });
+    } catch (e, stackTrace) {
+      print('Error retrieving stores: $e');
+      print(stackTrace);
+      throw e; // Rethrow the error for the caller to handle
+    }
+  }
+
+  Future<int> getStockForProduct(String storeId, String productId) async {
+    try {
+      // Retrieve the store document
+      DocumentSnapshot<Map<String, dynamic>?> storeSnapshot =
+          await FirebaseFirestore.instance
+              .collection('stores')
+              .doc(storeId)
+              .get();
+
+      // Check if the store document exists
+      if (!storeSnapshot.exists) {
+        // Print debug message and return a default stock value
+        print('Store document not found for storeId: $storeId');
+        return 0;
+      }
+
+      // Get the 'products' array from the store document
+      List<dynamic>? products = storeSnapshot.data()?['products'];
+
+      // Debug statement to print the product array
+
+      // Check if the 'products' array exists and is not empty
+      if (products == null || products.isEmpty) {
+        // Print debug message and return a default stock value
+        print('Products array is empty or not found in store document');
+        return 0;
+      }
+
+      // Find the product object within the 'products' array where 'productId' matches 'pid'
+      var product = products.firstWhere(
+        (product) => product['pid'] == productId,
+        orElse: () => null,
+      );
+
+      // Check if the product object is found
+      if (product == null) {
+        // Print debug message and return a default stock value
+        print('Product not found in the products array');
+        return 0;
+      }
+
+      // Retrieve the stock number from the product object
+      int stock = (product as Map<String, dynamic>)['storestock'] ?? 0;
+      print('Stock: $stock');
+      return stock;
+    } catch (e) {
+      // Print the error message if an exception occurs
+      print('Error retrieving stock for product: $e');
+      return 0; // Return 0 in case of any errors
+    }
+  }
+
+  void transferStock(
+      String storeId, String productId, int transferQuantity) async {
+    try {
+      // Get the current store data
+      final storeSnapshot = await FirebaseFirestore.instance
+          .collection('stores')
+          .doc(storeId)
+          .get();
+
+      if (!storeSnapshot.exists) {
+        print('Store document not found for storeId: $storeId');
+        return;
+      }
+
+      // Get the products array from the store document
+      List<dynamic>? products = storeSnapshot.data()?['products'];
+
+      // Check if the 'products' array exists and is not empty
+      if (products == null || products.isEmpty) {
+        print('Products array is empty or not found in store document');
+        return;
+      }
+
+      // Find the product object within the 'products' array where 'productId' matches 'pid'
+      var product = products.firstWhere(
+        (product) => product['pid'] == productId,
+        orElse: () => null,
+      );
+
+      // Check if the product object is found
+      if (product == null) {
+        print('Product not found in the products array');
+        return;
+      }
+
+      // Retrieve the current store stock from the product object
+      int currentStoreStock = product['storestock'] ?? 0;
+
+      // Calculate new store stock after transfer
+      int newStoreStock = currentStoreStock + transferQuantity;
+
+      // Update the store stock in the product object
+      product['storestock'] = newStoreStock;
+
+      // Update the entire products array in the store document
+      await FirebaseFirestore.instance
+          .collection('stores')
+          .doc(storeId)
+          .update({'products': products});
+
+      // Deduct the transfer quantity from product quantity in the products collection
+      final productData = await FirebaseFirestore.instance
+          .collection('products')
+          .doc(productId)
+          .get();
+
+      int currentProductQuantity = productData['pquantity'] ?? 0;
+      int newProductQuantity = currentProductQuantity - transferQuantity;
+
+      await FirebaseFirestore.instance
+          .collection('products')
+          .doc(productId)
+          .update({'pquantity': newProductQuantity});
+    } catch (e) {
+      print('Error transferring stock: $e');
+    }
+  }
+
+  Future<Uint8List> _getImageAssetBytes(String assetName) async {
+    final ByteData data = await rootBundle.load('assets/images/$assetName');
+    final Uint8List bytes = data.buffer.asUint8List();
+    return bytes;
   }
 
   //upload image for product
@@ -203,7 +403,6 @@ class DatabaseService {
     String pname,
     double pprice,
     int pquantity,
-    String pcategory,
     String pdescription,
     String pimageUrl,
   ) async {
@@ -212,45 +411,10 @@ class DatabaseService {
       'pname': pname,
       'pprice': pprice,
       'pquantity': pquantity,
-      'pcategory': pcategory,
       'pdescription': pdescription,
       'pimageUrl': pimageUrl,
     });
-  }
-
-  // Function to create new product with pic
-  Future<void> createProductWithImage(
-    File image,
-    String pid,
-    String pname,
-    double pprice,
-    int pquantity,
-    String pcategory,
-    String pdescription,
-  ) async {
-    try {
-      // First, upload the product image and get the download URL
-      String? imageUrl = await uploadProductImage(image, pid);
-
-      if (imageUrl == null) {
-        throw Exception("Image upload failed");
-      }
-
-      // Create the product in Firestore with the obtained image URL
-      await createProduct(
-        pid,
-        pname,
-        pprice,
-        pquantity,
-        pcategory,
-        pdescription,
-        imageUrl,
-      );
-
-      print("Product created successfully");
-    } catch (e) {
-      print('Error creating product with image: $e');
-    }
+    await updateStoreProduct();
   }
 
   Future<void> editProduct(
@@ -258,51 +422,59 @@ class DatabaseService {
     String pname,
     double pprice,
     int pquantity,
-    String pcategory,
     String pdescription,
     String pimageUrl,
   ) async {
-    return await productsCollection.doc(uid).update({
-      'pid': pid,
-      'pname': pname,
-      'pprice': pprice,
-      'pquantity': pquantity,
-      'pcategory': pcategory,
-      'pdescription': pdescription,
-      'pimageUrl': pimageUrl,
-    });
+    try {
+      await productsCollection.doc(pid).update({
+        'pid': pid,
+        'pname': pname,
+        'pprice': pprice,
+        'pquantity': pquantity,
+        'pdescription': pdescription,
+        'pimageUrl': pimageUrl,
+      });
+
+      // After editing the product, update the product attribute of each store
+      await updateStoreProduct();
+    } catch (e) {
+      print("Error editing product: $e");
+    }
   }
 
-  Future<void> deleteProduct() async {
+  Future<void> deleteProduct(String pid) async {
     try {
-      await productsCollection.doc(uid).delete();
-    } catch (e) {
+      await productsCollection.doc(pid).delete();
+      await updateStoreProduct();
+    } catch (e, stackTrace) {
       print('Error deleting product data: $e');
+      print('Stack trace: $stackTrace');
       throw Exception('Error deleting product data');
     }
   }
 
   //return products in a list
-  Future<List<Map<String, dynamic>>> retrieveProductList() async {
+  Stream<List<Map<String, dynamic>>> retrieveProductList() {
     try {
-      QuerySnapshot querySnapshot =
-          await productsCollection.get(); // Fetch all documents
+      // Return a stream that listens to changes in the products collection
+      return productsCollection.snapshots().map((querySnapshot) {
+        List<Map<String, dynamic>> productList = [];
 
-      List<Map<String, dynamic>> productList = [];
-
-      // Loop through each document and add to product list
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>?;
-        if (data != null) {
-          data['pid'] = doc.id; // Store the product ID
-          productList.add(data); // Add to list
+        // Loop through each document and add to product list
+        for (var doc in querySnapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>?;
+          if (data != null) {
+            data['pid'] = doc.id; // Store the product ID
+            productList.add(data); // Add to list
+          }
         }
-      }
 
-      return productList; // Return the list of products
+        return productList; // Return the list of products
+      });
     } catch (e) {
-      print('Error retrieving product list: $e');
-      return []; // Return empty list if there's an error
+      print('Error retrieving product list stream: $e');
+      // Return an empty stream if there's an error
+      return Stream.value([]);
     }
   }
 
@@ -335,7 +507,6 @@ class DatabaseService {
         'pname': productData['pname'],
         'pprice': productData['pprice'],
         'pquantity': productData['pquantity'],
-        'pcategory': productData['pcategory'],
         'pdescription': productData['pdescription'],
         'imageUrl': imageUrl, // The image URL fetched earlier
       };
@@ -343,5 +514,19 @@ class DatabaseService {
       print("Error retrieving product data: $e");
       return {}; // Return an empty map on error
     }
+  }
+
+  Future<void> updateProductData(int transferQuantity, String productId) async {
+    final Map<String, dynamic> productData = await getProductData(productId);
+    final int updatedQuantity = productData['pquantity'] - transferQuantity;
+    // Update product quantity
+    editProduct(
+      productId,
+      productData['pname'],
+      productData['pprice'],
+      updatedQuantity,
+      productData['pdescription'],
+      productData['imageUrl'],
+    );
   }
 }

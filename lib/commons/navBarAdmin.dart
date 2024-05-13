@@ -16,7 +16,8 @@ class CustomBottomAdminNavigationBar extends StatefulWidget {
       _CustomBottomAdminNavigationBarState();
 }
 
-class _CustomBottomAdminNavigationBarState extends State<CustomBottomAdminNavigationBar> {
+class _CustomBottomAdminNavigationBarState
+    extends State<CustomBottomAdminNavigationBar> {
   late PageController _pageController;
   int _selectedIndex = 0;
 
@@ -53,7 +54,7 @@ class _CustomBottomAdminNavigationBarState extends State<CustomBottomAdminNaviga
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.inventory),
-          label: 'Stock',
+          label: 'Product',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.description),
@@ -77,7 +78,7 @@ class _CustomBottomAdminNavigationBarState extends State<CustomBottomAdminNaviga
             Navigator.pushReplacementNamed(context, '/home');
             break;
           case 1:
-            Navigator.pushReplacementNamed(context, '/stock');
+            Navigator.pushReplacementNamed(context, '/product');
             break;
           case 2:
             Navigator.pushReplacementNamed(context, '/order');

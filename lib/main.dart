@@ -11,8 +11,9 @@ import 'package:shopwiz/pages/cart/cart_page.dart';
 import 'package:shopwiz/pages/explore/explore_page.dart';
 import 'package:shopwiz/pages/home/home.dart';
 import 'package:shopwiz/pages/order/order_page.dart';
+import 'package:shopwiz/pages/product/product.dart';
+import 'package:shopwiz/pages/product/stock_page.dart';
 import 'package:shopwiz/pages/profile/profile.dart';
-import 'package:shopwiz/pages/stock/stock_page.dart';
 import 'package:shopwiz/services/database.dart';
 import 'package:shopwiz/shared/loading_screen.dart';
 import 'package:shopwiz/shared/wrapper.dart';
@@ -48,40 +49,36 @@ class CustomPageTransitionsBuilder extends PageTransitionsBuilder {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  print('Main function is run');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   final DatabaseService _dbService = DatabaseService(uid: '');
 
-  // List of stores to create, each with unique attributes
   List<Map<String, dynamic>> stores = [
     {
       'name': 'Vitacare Taman Impian Emas',
-      'address': '135/2 Jalan Impiana Emasi ',
-      'imagePath': 'assets\images\Vitacare Taman Impian Emas.png',
+      'address': '135/2 Jalan Impiana Emas',
+      'imagePath': 'VitacareTamanImpianEmas.png',
     },
     {
       'name': 'Vitacare Taman Pelangi',
       'address': '332/21 Jalan Pelangi, 5/6 Taman Pelangi',
-      'imagePath': 'assets\images\Vitacare Taman Pelangi.png',
+      'imagePath': 'VitacareTamanPelangi.png',
     },
     {
       'name': 'Vitacare Taman Universiti',
       'address': '6 Blok 3/2 Taman Universiti',
-      'imagePath': 'assets\images\Vitacare Taman Universiti.png',
+      'imagePath': 'VitacareTamanUniversiti.png',
     },
   ];
 
-  // Iterate through the list of stores and create each one
   for (var store in stores) {
-    String sname = store['name'];
-    String saddress = store['address'];
-    String imagePath = store['imagePath'];
-
     await _dbService.createStore(
-      sname,
-      saddress,
-      imagePath,
+      store['name'],
+      store['address'],
+      store['imagePath'],
     );
   }
 
@@ -130,6 +127,7 @@ class MyApp extends StatelessWidget {
           '/home': (context) => HomeScreen(),
           '/profile': (context) => ProfileScreen(),
           '/order': (context) => OrderScreen(),
+          '/product': (context) => ProductScreen(),
           '/stock': (context) => StockScreen(),
         },
       ),

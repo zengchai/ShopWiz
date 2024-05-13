@@ -9,6 +9,7 @@ class BaseLayoutAdmin extends StatelessWidget {
       floatingActionButton; // Optional floating action button
 
   const BaseLayoutAdmin({
+    super.key,
     required this.child,
     this.floatingActionButton,
   });
