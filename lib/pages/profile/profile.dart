@@ -60,6 +60,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pushReplacementNamed(context, '/sign_in');
   }
 
+  void deleteProfilefunc() async {
+    AuthService authService = AuthService();
+    DatabaseService databaseService =
+        DatabaseService(uid: authService.getCurrentUser().uid);
+
+    Provider.of<CustomAuthProvider>(context, listen: false).signOut();
+    // Navigation Bar ============================
+    // Reset the selected index to 0
+    Provider.of<BottomNavigationBarModel>(context, listen: false)
+        .updateSelectedIndex(0);
+    ;
+    await _auth.deleteUser();
+    await databaseService.deleteUserData();
+    Navigator.pushReplacementNamed(context, '/sign_in');
+  }
+
   void deleteProfile(BuildContext context) async {
     // Show confirmation dialog
     showDialog(
@@ -71,27 +87,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: <Widget>[
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop(); // Close the dialog
                 AuthService authService = AuthService();
                 DatabaseService databaseService =
                     DatabaseService(uid: authService.getCurrentUser().uid);
 
+                Provider.of<CustomAuthProvider>(context, listen: false)
+                    .signOut();
+                // Navigation Bar ============================
+                // Reset the selected index to 0
+                Provider.of<BottomNavigationBarModel>(context, listen: false)
+                    .updateSelectedIndex(0);
+                ;
                 // Delete user data from Firestore
                 await databaseService.deleteUserData();
 
                 // Delete user account from Firebase Auth
                 await authService.deleteUser();
-
-                // Navigation Bar ============================
-                // Reset the selected index to 0
-                Provider.of<BottomNavigationBarModel>(context, listen: false)
-                    .updateSelectedIndex(0);
-
-                // Navigate back to sign in page using NavigatorState
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/sign_in',
-                  (Route<dynamic> route) => false,
-                );
+                Navigator.pushReplacementNamed(context, '/sign_in');
               },
               child: Text('Confirm'),
             ),
