@@ -57,7 +57,6 @@ class _ProductScreenState extends State<ProductScreen> {
         TextEditingController();
     final TextEditingController productQuantityController =
         TextEditingController();
-
     final TextEditingController productDescriptionController =
         TextEditingController();
 
