@@ -7,6 +7,7 @@ import 'package:shopwiz/pages/home/home.dart';
 import 'package:shopwiz/pages/authenticate/forgot_password.dart';
 import 'package:shopwiz/pages/authenticate/sign_in.dart';
 import 'package:shopwiz/pages/authenticate/register.dart';
+import 'package:shopwiz/pages/home/productdetails.dart';
 import 'package:shopwiz/shared/loading_screen.dart';
 import 'package:shopwiz/shared/wrapper.dart';
 import 'package:shopwiz/pages/profile/profile.dart';
@@ -61,7 +62,6 @@ void main() async {
     ),
   );
 }
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -93,6 +93,12 @@ class MyApp extends StatelessWidget {
           '/cart': (context) => CartScreen(),
           '/home': (context) => HomeScreen(),
           '/profile': (context) => ProfileScreen(),
+          // Provide the productId when navigating to ExploreScreen
+          '/pdetails': (context) {
+            final Map<String, dynamic> args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+            final String productId = args['productId'];
+            return ProductDetailsScreen(productId: productId, userId: '',);
+          },
         },
       ),
     );
