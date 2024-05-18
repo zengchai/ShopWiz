@@ -12,6 +12,10 @@ class DatabaseService {
   // Reference to the users collection
   final CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('users');
+  final CollectionReference reviewCollection =
+      FirebaseFirestore.instance.collection('reviews');
+  final CollectionReference productCollection =
+      FirebaseFirestore.instance.collection('products');
 
   Future<void> setUserData(
       String username, String email, String phonenum, String uid) async {
@@ -58,7 +62,7 @@ class DatabaseService {
     });
   }
 
-   // Upload profile image to Firebase Storage
+  // Upload profile image to Firebase Storage
   Future<String?> uploadProfileImage(File image, String uid) async {
     try {
       // Create a reference to the location in Firebase Storage
@@ -95,11 +99,51 @@ class DatabaseService {
 
   // Delete user
   Future<void> deleteUserData() async {
-  try {
-    await usersCollection.doc(uid).delete();
-  } catch (e) {
-    print('Error deleting user data: $e');
-    throw Exception('Error deleting user data');
+    try {
+      await usersCollection.doc(uid).delete();
+    } catch (e) {
+      print('Error deleting user data: $e');
+      throw Exception('Error deleting user data');
+    }
   }
-}
+
+  Future updateReviewData(String productID, String orderID, String userID,
+      String review, double rating, String userName) async {
+    try {
+      var docRef = await reviewCollection.add({
+        'userID': uid,
+        'orderID': orderID,
+        'userName': userName,
+        'rating': rating,
+        'review': review,
+      });
+
+      String docId = docRef.id;
+      await productCollection.doc(productID).update({
+        'review': FieldValue.arrayUnion([docId]),
+      });
+
+      return null; // Return the document ID
+    } catch (e) {
+      print('Error adding review: $e');
+      return null;
+    }
+  }
+
+  Future<String?> getProductImageURL(String pid) async {
+    try {
+      if (pid == null || pid.isEmpty) {
+        print("Invalid PID");
+        return null; // Return null for invalid PID
+      }
+
+      Reference storageReference = FirebaseStorage.instance.ref().child(
+          'ProductImages/$pid.jpg'); // Using product ID for the image path
+
+      return await storageReference.getDownloadURL(); // Return the image URL
+    } catch (e) {
+      print('Error getting product image URL: $e');
+      return null; // Return null on error
+    }
+  }
 }

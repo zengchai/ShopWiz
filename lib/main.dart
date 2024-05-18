@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopwiz/commons/NavigationProvider.dart';
 import 'package:shopwiz/pages/cart/cart_page.dart';
-import 'package:shopwiz/pages/explore/explore_page.dart';
+import 'package:shopwiz/pages/order/order_page.dart';
 import 'package:shopwiz/pages/home/home.dart';
 import 'package:shopwiz/pages/authenticate/forgot_password.dart';
 import 'package:shopwiz/pages/authenticate/sign_in.dart';
@@ -53,7 +53,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          // to prevent user logout when restart device
+            // to prevent user logout when restart device
             create: (_) => CustomAuthProvider()..checkUserLoggedIn()),
         ChangeNotifierProvider(create: (_) => BottomNavigationBarModel()),
       ],
@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
           '/sign_in': (context) => SignInScreen(),
           '/register': (context) => RegisterScreen(),
           '/forgot_password': (context) => ForgotPasswordScreen(),
-          '/explore': (context) => ExploreScreen(),
+          '/explore': (context) => OrderScreen(),
           '/cart': (context) => CartScreen(),
           '/home': (context) => HomeScreen(),
           '/profile': (context) => ProfileScreen(),

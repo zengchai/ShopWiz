@@ -1,13 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopwiz/pages/authenticate/sign_in.dart';
 import 'package:shopwiz/pages/authenticate/register.dart';
 import 'package:shopwiz/pages/home/home.dart';
-import 'package:shopwiz/shared/loading_screen.dart';
-import 'package:shopwiz/shared/wrapper.dart';
-
 class CustomAuthProvider extends ChangeNotifier {
   bool _isSignedIn = false;
   bool _isRegistering = false;
@@ -49,7 +45,7 @@ class Authenticate extends StatelessWidget {
     final authProvider = Provider.of<CustomAuthProvider>(context);
     //To prevent go back to sign in screenby clicking go back to android home
     if (authProvider.isSignedIn) {
-      return SignInScreen();  
+      return HomeScreen();
     } else if (authProvider.isSignedIn && !authProvider.isRegistering) {
       return HomeScreen();
     } else if (authProvider.isRegistering) {
