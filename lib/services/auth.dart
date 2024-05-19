@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:shopwiz/services/database.dart';
 import 'package:shopwiz/models/users.dart';
 

@@ -3,7 +3,7 @@ class Product {
   final String pname;
   final String pcategory;
   final String pdescription;
-  final String pimageUrl;
+  late final String pimageUrl;
   final double pprice;
   final int pquantity;
 

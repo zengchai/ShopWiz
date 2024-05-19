@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shopwiz/pages/cart/CartItem.dart';
 import 'package:shopwiz/pages/cart/cart_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shopwiz/commons/BaseLayout.dart';
 
 class CartScreen extends StatefulWidget {
   @override
@@ -14,7 +17,8 @@ class _CartScreenState extends State<CartScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late String _userId; // Variable to store user ID
   List<String> _selectedItems = []; // List to store IDs of selected items
-late List<CartItem> cartItems; // Variable to store cart items
+  late List<CartItem> cartItems; // Variable to store cart items
+  late StreamSubscription<List<CartItem>> _subscription;
 
   @override
   void initState() {
@@ -22,7 +26,13 @@ late List<CartItem> cartItems; // Variable to store cart items
     _fetchCartItems();
   }
 
-   void _fetchCartItems() async {
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+
+  void _fetchCartItems() async {
     try {
       // Retrieve the current user
       User? currentUser = _auth.currentUser;
@@ -36,12 +46,10 @@ late List<CartItem> cartItems; // Variable to store cart items
       _userId = currentUser.uid; // Store user ID
 
       // Get the stream of cart items for the current user
-      setState(() {
-        _cartItemsStream = _cartController.getCartItems(_userId);
-      });
+      _cartItemsStream = _cartController.getCartItems(_userId);
 
       // Listen to the cart items stream and update the cartItems list
-      _cartItemsStream.listen((items) {
+      _subscription = _cartItemsStream.listen((items) {
         setState(() {
           cartItems = items;
         });
@@ -164,115 +172,119 @@ double _calculateTotalSelectedSubtotal(List<CartItem> cartItems) {
 
 @override
 Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Cart'),
-    ),
-    body: StreamBuilder<List<CartItem>>(
-      stream: _cartItemsStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
+  return BaseLayout(
+    child: Scaffold(
+      appBar: AppBar(
+        title: Text('Cart'),
+      ),
+      body: StreamBuilder<List<CartItem>>(
+        stream: _cartItemsStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Text('No items in the cart'),
-          );
-        }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Text('No items in the cart'),
+            );
+          }
 
-        List<CartItem> cartItems = snapshot.data!;
-        double totalSelectedSubtotal = _calculateTotalSelectedSubtotal(cartItems);
+          List<CartItem> cartItems = snapshot.data!;
+          double totalSelectedSubtotal = _calculateTotalSelectedSubtotal(cartItems);
 
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: 20), // Add some spacing
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: cartItems.length,
-                itemBuilder: (context, index) {
-                  CartItem cartItem = cartItems[index];
-                  double subtotal = cartItem.price * cartItem.quantity; // Calculate subtotal for each item
-                  // Add subtotal to total
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 20), // Add some spacing
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: cartItems.length,
+                  itemBuilder: (context, index) {
+                    CartItem cartItem = cartItems[index];
+                    double subtotal = cartItem.price * cartItem.quantity; // Calculate subtotal for each item
+                    // Add subtotal to total
 
-                  bool isSelected = _selectedItems.contains(cartItem.pid);
+                    bool isSelected = _selectedItems.contains(cartItem.pid);
 
-                  return Card(
-                    child: ListTile(
-                      leading: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          value: isSelected,
-                          onChanged: (value) {
-                            _toggleSelection(cartItem.pid);
-                          },
+                    return Card(
+                      child: ListTile(
+                        leading: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: isSelected,
+                            onChanged: (value) {
+                              _toggleSelection(cartItem.pid);
+                            },
+                          ),
+                        ),
+                        title: Row(
+                          children: [
+                            SizedBox(width: 10),
+                            SizedBox(
+                              width: 60, // Set a fixed width for the image
+                              height: 60, // Set a fixed height for the image
+                              child: Image.network(cartItem.image), // Display image for each item
+                            ),
+                            SizedBox(width: 10),
+                            Text(cartItem.name),
+                          ],
+                        ),
+                        subtitle: Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.remove),
+                              onPressed: () async {
+                                _subtractQuantity(cartItem.pid);
+                              },
+                            ),
+                            Text('${cartItem.quantity}'),
+                            IconButton(
+                              icon: Icon(Icons.add),
+                              onPressed: () async {
+                                _addQuantity(cartItem.pid);
+                              },
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                _deleteItem(cartItem.pid);
+                              },
+                              child: Text('Delete'),
+                            ),
+                            Spacer(),
+                            Text('RM ${subtotal.toStringAsFixed(2)}'), // Display subtotal for each item
+                          ],
                         ),
                       ),
-                      title: Row(
-                        children: [
-                          SizedBox(width: 10),
-                          SizedBox(
-                            width: 60, // Set a fixed width for the image
-                            height: 60, // Set a fixed height for the image
-                            child: Image.network(cartItem.image), // Display image for each item
-                          ),
-                          SizedBox(width: 10),
-                          Text(cartItem.name),
-                        ],
-                      ),
-                      subtitle: Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.remove),
-                            onPressed: () async {
-                              _subtractQuantity(cartItem.pid);
-                            },
-                          ),
-                          Text('${cartItem.quantity}'),
-                          IconButton(
-                            icon: Icon(Icons.add),
-                            onPressed: () async {
-                              _addQuantity(cartItem.pid);
-                            },
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              _deleteItem(cartItem.pid);
-                            },
-                            child: Text('Delete'),
-                          ),
-                          Spacer(),
-                          Text('RM ${subtotal.toStringAsFixed(2)}'), // Display subtotal for each item
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: 20), // Add some spacing
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton(
-                  onPressed: _placeOrder,
-                  child: Text('Place Order'),
+                    );
+                  },
                 ),
-              ),
-              SizedBox(height: 10), // Add some spacing
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  'Total Price: RM ${totalSelectedSubtotal.toStringAsFixed(2)}', // Display total subtotal for selected items
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                SizedBox(height: 20), // Add some spacing
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: _placeOrder,
+                    child: Text('Place Order'),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+                SizedBox(height: 10), // Add some spacing
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    'Total Price: RM ${totalSelectedSubtotal.toStringAsFixed(2)}', // Display total subtotal for selected items
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     ),
   );
-}}
+}
+
+}
