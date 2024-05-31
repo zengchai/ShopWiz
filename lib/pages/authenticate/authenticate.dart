@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopwiz/pages/authenticate/sign_in.dart';
 import 'package:shopwiz/pages/authenticate/register.dart';
 import 'package:shopwiz/pages/home/home.dart';
+
+
 class CustomAuthProvider extends ChangeNotifier {
   bool _isSignedIn = false;
   bool _isRegistering = false;

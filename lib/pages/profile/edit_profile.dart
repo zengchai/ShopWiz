@@ -1,10 +1,8 @@
 import 'dart:io';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:shopwiz/commons/NavigationProvider.dart';
-import 'package:shopwiz/commons/navBar.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shopwiz/services/auth.dart';
 import 'package:shopwiz/services/database.dart';
 
@@ -335,7 +333,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           child: ElevatedButton(
                             onPressed: saveChanges,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromARGB(255, 108, 74, 255),
+                              backgroundColor:
+                                  Color.fromARGB(255, 108, 74, 255),
                             ),
                             child: isSavingChanges
                                 ? CircularProgressIndicator()
