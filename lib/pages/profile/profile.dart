@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopwiz/commons/BaseLayout.dart';
+import 'package:shopwiz/commons/BaselayoutAdmin.dart';
 import 'package:shopwiz/commons/NavigationProvider.dart';
 import 'package:shopwiz/pages/authenticate/authenticate.dart';
 import 'package:shopwiz/pages/profile/edit_profile.dart';
@@ -140,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   //admin profile
   Widget adminLayout(Map<String, dynamic> userData) {
-    return BaseLayout(
+    return BaseLayoutAdmin(
       child: SingleChildScrollView(
         child: Center(
           child: Padding(
