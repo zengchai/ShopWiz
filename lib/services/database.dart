@@ -38,6 +38,7 @@ class DatabaseService {
         return {
           'username': userData['username'],
           'email': userData['email'],
+          'order': userData['orders'],
           'phonenum': userData['phonenum'],
           'uid': userData['uid'],
           'imageUrl': await getProfileImageURL(uid),
@@ -104,46 +105,6 @@ class DatabaseService {
     } catch (e) {
       print('Error deleting user data: $e');
       throw Exception('Error deleting user data');
-    }
-  }
-
-  Future updateReviewData(String productID, String orderID, String userID,
-      String review, double rating, String userName) async {
-    try {
-      var docRef = await reviewCollection.add({
-        'userID': uid,
-        'orderID': orderID,
-        'userName': userName,
-        'rating': rating,
-        'review': review,
-      });
-
-      String docId = docRef.id;
-      await productCollection.doc(productID).update({
-        'review': FieldValue.arrayUnion([docId]),
-      });
-
-      return null; // Return the document ID
-    } catch (e) {
-      print('Error adding review: $e');
-      return null;
-    }
-  }
-
-  Future<String?> getProductImageURL(String pid) async {
-    try {
-      if (pid == null || pid.isEmpty) {
-        print("Invalid PID");
-        return null; // Return null for invalid PID
-      }
-
-      Reference storageReference = FirebaseStorage.instance.ref().child(
-          'ProductImages/$pid.jpg'); // Using product ID for the image path
-
-      return await storageReference.getDownloadURL(); // Return the image URL
-    } catch (e) {
-      print('Error getting product image URL: $e');
-      return null; // Return null on error
     }
   }
 }

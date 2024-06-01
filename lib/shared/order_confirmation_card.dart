@@ -6,14 +6,14 @@ import 'package:shopwiz/services/auth.dart';
 import 'package:shopwiz/services/database.dart';
 import 'package:shopwiz/shared/image.dart';
 
-class Order_card extends StatefulWidget {
+class Order_Confirmation_Card extends StatefulWidget {
   final String orderId;
   final double totalPrice;
   final int totalQuantity;
   final String status;
   final List<Store> store;
 
-  const Order_card({
+  const Order_Confirmation_Card({
     Key? key,
     required this.orderId,
     required this.totalPrice,
@@ -23,10 +23,10 @@ class Order_card extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<Order_card> createState() => _Order_cardState();
+  State<Order_Confirmation_Card> createState() => _Order_cardState();
 }
 
-class _Order_cardState extends State<Order_card> {
+class _Order_cardState extends State<Order_Confirmation_Card> {
   final AuthService _auth = AuthService();
 
   Future<void> orderDetail(String orderId, List<Store> store) async {
@@ -157,7 +157,7 @@ class _Order_cardState extends State<Order_card> {
                                   ),
                                 ),
                                 child: Text(
-                                  'Review',
+                                  'View',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.white,

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shopwiz/models/order.dart';
 import 'package:shopwiz/shared/order_item.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
-  final List<Map<String, dynamic>> store;
+  final List<Store> store;
 
   const OrderDetailScreen({
     Key? key,
@@ -86,6 +87,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   itemCount: widget.store.length,
                   itemBuilder: (context, index) {
                     final store = widget.store[index];
+                    print(store);
                     return Card(
                       margin: const EdgeInsets.fromLTRB(10, 25, 10, 10),
                       shape: RoundedRectangleBorder(
@@ -115,7 +117,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(store['storeName']),
+                                Text(store.storeId),
                                 ElevatedButton(
                                   onPressed: null,
                                   child: Icon(
@@ -128,9 +130,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ListView.builder(
                               shrinkWrap: true,
                               physics: NeverScrollableScrollPhysics(),
-                              itemCount: store['items'].length,
+                              itemCount: store.items.length,
                               itemBuilder: (context, itemIndex) {
-                                final item = store['items'][itemIndex];
+                                final item = store.items[itemIndex];
                                 return Column(
                                   children: [
                                     SizedBox(
@@ -138,10 +140,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                     ),
                                     Order_item(
                                       orderId: widget.orderId,
-                                      productId: item['productId'],
-                                      productName: item['productName'],
-                                      quantity: item['quantity'],
-                                      price: item['price'],
+                                      productId: item.productId,
+                                      productName: item.productName,
+                                      quantity: item.quantity,
+                                      price: item.price.toDouble(),
                                     ),
                                   ],
                                 );
