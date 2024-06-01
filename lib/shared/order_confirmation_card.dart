@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shopwiz/models/order.dart';
+import 'package:shopwiz/pages/order/order_confirmation_page.dart';
 import 'package:shopwiz/pages/order/order_detail.dart';
 import 'package:shopwiz/pages/order/review_widget.dart';
 import 'package:shopwiz/services/auth.dart';
@@ -29,11 +30,16 @@ class Order_Confirmation_Card extends StatefulWidget {
 class _Order_cardState extends State<Order_Confirmation_Card> {
   final AuthService _auth = AuthService();
 
-  Future<void> orderDetail(String orderId, List<Store> store) async {
+  Future<void> orderDetail(
+      String orderId, List<Store> store, String status) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => OrderDetailScreen(orderId: orderId, store: store),
+        builder: (context) => OrderConfirmationScreen(
+          orderId: orderId,
+          store: store,
+          status: status,
+        ),
       ),
     );
   }
@@ -77,8 +83,7 @@ class _Order_cardState extends State<Order_Confirmation_Card> {
                   children: [
                     Flexible(
                       child: Text(
-                        widget.store.first.items.first
-                            .productName, // Access productName directly
+                        widget.orderId, // Access productName directly
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 16,
@@ -97,6 +102,15 @@ class _Order_cardState extends State<Order_Confirmation_Card> {
                               Opacity(
                                 opacity: 0.7,
                                 child: Text(
+                                  widget.store.first.items.first.productName,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                              Opacity(
+                                opacity: 0.7,
+                                child: Text(
                                   "Qty: ${widget.totalQuantity}",
                                   style: TextStyle(
                                     fontSize: 10,
@@ -104,32 +118,13 @@ class _Order_cardState extends State<Order_Confirmation_Card> {
                                 ),
                               ),
                               SizedBox(height: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: widget.status == "Pick Up"
-                                      ? Colors.yellow
-                                      : Colors.green[300],
-                                  border: Border.all(color: Colors.black),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.fromLTRB(9, 3, 9, 3),
-                                child: Opacity(
-                                  opacity: 0.7,
-                                  child: Text(
-                                    widget.status,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 8),
                               Opacity(
                                 opacity: 0.7,
                                 child: Text(
-                                  widget.orderId,
+                                  "RM ${widget.totalPrice}",
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
@@ -142,7 +137,8 @@ class _Order_cardState extends State<Order_Confirmation_Card> {
                             children: [
                               ElevatedButton(
                                 onPressed: () {
-                                  orderDetail(widget.orderId, widget.store);
+                                  orderDetail(widget.orderId, widget.store,
+                                      widget.status);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   padding: EdgeInsets.symmetric(
@@ -165,16 +161,6 @@ class _Order_cardState extends State<Order_Confirmation_Card> {
                                 ),
                               ),
                               SizedBox(height: 4),
-                              Opacity(
-                                opacity: 0.7,
-                                child: Text(
-                                  "RM ${widget.totalPrice}",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         )

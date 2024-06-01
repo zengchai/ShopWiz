@@ -29,11 +29,16 @@ class Order_card extends StatefulWidget {
 class _Order_cardState extends State<Order_card> {
   final AuthService _auth = AuthService();
 
-  Future<void> orderDetail(String orderId, List<Store> store) async {
+  Future<void> orderDetail(
+      String orderId, List<Store> store, String status) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => OrderDetailScreen(orderId: orderId, store: store),
+        builder: (context) => OrderDetailScreen(
+          orderId: orderId,
+          store: store,
+          status: status,
+        ),
       ),
     );
   }
@@ -142,7 +147,8 @@ class _Order_cardState extends State<Order_card> {
                             children: [
                               ElevatedButton(
                                 onPressed: () {
-                                  orderDetail(widget.orderId, widget.store);
+                                  orderDetail(widget.orderId, widget.store,
+                                      widget.status);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   padding: EdgeInsets.symmetric(

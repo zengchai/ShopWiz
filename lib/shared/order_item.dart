@@ -50,6 +50,7 @@ class _Order_itemState extends State<Order_item> {
 
   @override
   Widget build(BuildContext context) {
+    String uid = _auth.getCurrentUser().uid;
     return Row(
       children: [
         ProductImageWidget(productId: widget.productId),
@@ -76,7 +77,7 @@ class _Order_itemState extends State<Order_item> {
                       Opacity(
                         opacity: 0.7,
                         child: Text(
-                          "Qty: 2",
+                          "Qty: ${widget.quantity}",
                           style: TextStyle(
                             fontSize: 10,
                           ),
@@ -86,7 +87,7 @@ class _Order_itemState extends State<Order_item> {
                       Opacity(
                         opacity: 0.7,
                         child: Text(
-                          "RM 100.00",
+                          "RM ${widget.price}",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -98,30 +99,32 @@ class _Order_itemState extends State<Order_item> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          addReview(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 2,
-                            horizontal: 15,
-                          ),
-                          backgroundColor: Color.fromARGB(
-                            255,
-                            108,
-                            74,
-                            255,
-                          ),
-                        ),
-                        child: Text(
-                          'Review',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
+                          ? Container()
+                          : ElevatedButton(
+                              onPressed: () {
+                                addReview(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 2,
+                                  horizontal: 15,
+                                ),
+                                backgroundColor: Color.fromARGB(
+                                  255,
+                                  108,
+                                  74,
+                                  255,
+                                ),
+                              ),
+                              child: Text(
+                                'Review',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                       SizedBox(height: 4),
                     ],
                   ),

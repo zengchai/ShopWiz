@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shopwiz/models/order.dart';
 import 'package:shopwiz/shared/order_item.dart';
 
-class OrderDetailScreen extends StatefulWidget {
+class OrderConfirmationScreen extends StatefulWidget {
   final String orderId;
   final String status;
   final List<Store> store;
 
-  const OrderDetailScreen({
+  const OrderConfirmationScreen({
     Key? key,
     required this.orderId,
     required this.status,
@@ -15,10 +15,11 @@ class OrderDetailScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+  State<OrderConfirmationScreen> createState() =>
+      _OrderConfirmationScreenState();
 }
 
-class _OrderDetailScreenState extends State<OrderDetailScreen> {
+class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,7 +57,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           child: Text(
                             widget.orderId,
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         )

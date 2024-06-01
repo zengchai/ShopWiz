@@ -5,6 +5,7 @@ import 'package:shopwiz/services/auth.dart';
 import 'package:shopwiz/services/database.dart';
 import 'package:shopwiz/services/reviewservice.dart';
 import 'package:shopwiz/shared/order_card.dart';
+import 'package:shopwiz/shared/order_confirmation_card.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({Key? key}) : super(key: key);
@@ -138,8 +139,8 @@ class _OrderScreenState extends State<OrderScreen> {
                   // Retrieve order data for this index
                   final orderData = ongoingOrders[index];
                   // Build and return Order_card widget
-                  return uid == ""
-                      ? Order_card(
+                  return uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
+                      ? Order_Confirmation_Card(
                           orderId: orderData.orderId,
                           totalQuantity: orderData.totalQuantity,
                           totalPrice: orderData.totalPrice,
@@ -162,13 +163,21 @@ class _OrderScreenState extends State<OrderScreen> {
                   // Retrieve order data for this index
                   final orderData = historyOrders[index];
                   // Build and return Order_card widget
-                  return Order_card(
-                    orderId: orderData.orderId,
-                    totalQuantity: orderData.totalQuantity,
-                    totalPrice: orderData.totalPrice,
-                    status: orderData.status,
-                    store: orderData.stores,
-                  );
+                  return uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
+                      ? Order_Confirmation_Card(
+                          orderId: orderData.orderId,
+                          totalQuantity: orderData.totalQuantity,
+                          totalPrice: orderData.totalPrice,
+                          status: orderData.status,
+                          store: orderData.stores,
+                        )
+                      : Order_card(
+                          orderId: orderData.orderId,
+                          totalQuantity: orderData.totalQuantity,
+                          totalPrice: orderData.totalPrice,
+                          status: orderData.status,
+                          store: orderData.stores,
+                        );
                 },
               ),
             ],
