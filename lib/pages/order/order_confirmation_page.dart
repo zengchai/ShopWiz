@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shopwiz/models/order.dart';
+import 'package:shopwiz/services/auth.dart';
+import 'package:shopwiz/services/reviewservice.dart';
 import 'package:shopwiz/shared/order_item.dart';
 
 class OrderConfirmationScreen extends StatefulWidget {
@@ -20,6 +22,15 @@ class OrderConfirmationScreen extends StatefulWidget {
 }
 
 class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
+  Future<void> _updateOrderStatus(String orderId, String storeId) async {
+    final AuthService _auth = AuthService();
+
+    final uid = _auth.getCurrentUser().uid;
+    final orderService = Reviewservice(uid: uid);
+    await orderService.updateReviewStatus(orderId, storeId);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,7 +103,6 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                   itemCount: widget.store.length,
                   itemBuilder: (context, index) {
                     final store = widget.store[index];
-                    print(store);
                     return Card(
                       margin: const EdgeInsets.fromLTRB(10, 25, 10, 10),
                       shape: RoundedRectangleBorder(
@@ -124,12 +134,41 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                               children: [
                                 Text(store.storeId),
                                 ElevatedButton(
-                                  onPressed: null,
-                                  child: Icon(
-                                    Icons.arrow_right_rounded,
-                                    color: Colors.black,
+                                  onPressed: () {
+                                    if (widget.status == "Pick Up") {
+                                      if (store.status != "Received") {
+                                        _updateOrderStatus(
+                                            widget.orderId, store.storeId);
+                                        setState(() {
+                                          store.update("Received");
+                                        });
+                                      }
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 2,
+                                      horizontal: 15,
+                                    ),
+                                    backgroundColor:
+                                        widget.status == "Received" &&
+                                                store.status != null
+                                            ? Colors.grey[300]
+                                            : Color.fromARGB(
+                                                255,
+                                                108,
+                                                74,
+                                                255,
+                                              ),
                                   ),
-                                )
+                                  child: Text(
+                                    'Complete',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             ListView.builder(

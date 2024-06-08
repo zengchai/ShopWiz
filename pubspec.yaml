@@ -46,7 +46,6 @@ dependencies:
   firebase_app_check: ^0.2.1+17
   image_picker: ^1.0.8
   flutter_rating_bar: ^4.0.1
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

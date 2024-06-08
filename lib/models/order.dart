@@ -16,12 +16,18 @@ class Orders {
 
 class Store {
   final String storeId;
+  String status;
   final List<Item> items;
 
   Store({
     required this.storeId,
     required this.items,
+    this.status = "Pending", // Default value for status
   });
+
+  void update(String newStatus) {
+    this.status = newStatus;
+  }
 }
 
 class Item {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shopwiz/commons/BaseLayout.dart';
+import 'package:shopwiz/commons/BaselayoutAdmin.dart';
 import 'package:shopwiz/models/order.dart';
 import 'package:shopwiz/services/auth.dart';
 import 'package:shopwiz/services/database.dart';
@@ -119,71 +120,122 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = _auth.getCurrentUser().uid;
-    return BaseLayout(
-      child: DefaultTabController(
-        length: 2,
-        initialIndex: 0,
-        child: Scaffold(
-          appBar: TabBar(
-            tabs: [
-              Tab(text: "Ongoing"),
-              Tab(text: "History"),
-            ],
-          ),
-          body: TabBarView(
-            children: [
-              // Ongoing tab content
-              ListView.builder(
-                itemCount: ongoingOrders.length,
-                itemBuilder: (context, index) {
-                  // Retrieve order data for this index
-                  final orderData = ongoingOrders[index];
-                  // Build and return Order_card widget
-                  return uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
-                      ? Order_Confirmation_Card(
-                          orderId: orderData.orderId,
-                          totalQuantity: orderData.totalQuantity,
-                          totalPrice: orderData.totalPrice,
-                          status: orderData.status,
-                          store: orderData.stores,
-                        )
-                      : Order_card(
+    return uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
+        ? BaseLayoutAdmin(
+            child: DefaultTabController(
+              length: 2,
+              initialIndex: 0,
+              child: Scaffold(
+                appBar: TabBar(
+                  tabs: [
+                    Tab(text: "Ongoing"),
+                    Tab(text: "History"),
+                  ],
+                ),
+                body: TabBarView(
+                  children: [
+                    // Ongoing tab content
+                    ListView.builder(
+                      itemCount: ongoingOrders.length,
+                      itemBuilder: (context, index) {
+                        // Retrieve order data for this index
+                        final orderData = ongoingOrders[index];
+                        // Build and return Order_card widget
+                        return Order_Confirmation_Card(
                           orderId: orderData.orderId,
                           totalQuantity: orderData.totalQuantity,
                           totalPrice: orderData.totalPrice,
                           status: orderData.status,
                           store: orderData.stores,
                         );
-                },
+                      },
+                    ),
+                    // History tab content
+                    ListView.builder(
+                      itemCount: historyOrders.length,
+                      itemBuilder: (context, index) {
+                        // Retrieve order data for this index
+                        final orderData = historyOrders[index];
+                        // Build and return Order_card widget
+                        return Order_Confirmation_Card(
+                                orderId: orderData.orderId,
+                                totalQuantity: orderData.totalQuantity,
+                                totalPrice: orderData.totalPrice,
+                                status: orderData.status,
+                                store: orderData.stores,
+                              );
+                      },
+                    ),
+                  ],
+                ),
               ),
-              // History tab content
-              ListView.builder(
-                itemCount: historyOrders.length,
-                itemBuilder: (context, index) {
-                  // Retrieve order data for this index
-                  final orderData = historyOrders[index];
-                  // Build and return Order_card widget
-                  return uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
-                      ? Order_Confirmation_Card(
-                          orderId: orderData.orderId,
-                          totalQuantity: orderData.totalQuantity,
-                          totalPrice: orderData.totalPrice,
-                          status: orderData.status,
-                          store: orderData.stores,
-                        )
-                      : Order_card(
-                          orderId: orderData.orderId,
-                          totalQuantity: orderData.totalQuantity,
-                          totalPrice: orderData.totalPrice,
-                          status: orderData.status,
-                          store: orderData.stores,
-                        );
-                },
+            ),
+          )
+        : BaseLayout(
+            child: DefaultTabController(
+              length: 2,
+              initialIndex: 0,
+              child: Scaffold(
+                appBar: TabBar(
+                  tabs: [
+                    Tab(text: "Ongoing"),
+                    Tab(text: "History"),
+                  ],
+                ),
+                body: TabBarView(
+                  children: [
+                    // Ongoing tab content
+                    ListView.builder(
+                      itemCount: ongoingOrders.length,
+                      itemBuilder: (context, index) {
+                        // Retrieve order data for this index
+                        final orderData = ongoingOrders[index];
+                        // Build and return Order_card widget
+                        return uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
+                            ? Order_Confirmation_Card(
+                                orderId: orderData.orderId,
+                                totalQuantity: orderData.totalQuantity,
+                                totalPrice: orderData.totalPrice,
+                                status: orderData.status,
+                                store: orderData.stores,
+                              )
+                            : Order_card(
+                                orderId: orderData.orderId,
+                                totalQuantity: orderData.totalQuantity,
+                                totalPrice: orderData.totalPrice,
+                                status: orderData.status,
+                                store: orderData.stores,
+                              );
+                      },
+                    ),
+                    // History tab content
+                    ListView.builder(
+                      itemCount: historyOrders.length,
+                      itemBuilder: (context, index) {
+                        // Retrieve order data for this index
+                        final orderData = historyOrders[index];
+                        // Build and return Order_card widget
+                        return uid == "7aXevcNf3Cahdmk9l5jLRASw5QO2"
+                            ? Order_Confirmation_Card(
+                                orderId: orderData.orderId,
+                                totalQuantity: orderData.totalQuantity,
+                                totalPrice: orderData.totalPrice,
+                                status: orderData.status,
+                                store: orderData.stores,
+                              )
+                            : Order_card(
+                                orderId: orderData.orderId,
+                                totalQuantity: orderData.totalQuantity,
+                                totalPrice: orderData.totalPrice,
+                                status: orderData.status,
+                                store: orderData.stores,
+                              );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
+            ),
+          );
   }
 }

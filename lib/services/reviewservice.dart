@@ -151,4 +151,42 @@ class Reviewservice {
       stores: stores,
     );
   }
+
+  Future<void> updateReviewStatus(String orderId, String storeId) async {
+    try {
+      // Fetch the order document
+      DocumentSnapshot snapshot = await orderCollection.doc(orderId).get();
+      Map<String, dynamic>? orderData =
+          snapshot.data() as Map<String, dynamic>?;
+
+      if (orderData != null) {
+        List<dynamic> stores = orderData['store'] ?? [];
+
+        // Find the specific store by its storeId and update the status
+        for (var store in stores) {
+          if (store['storeId'] == storeId) {
+            store['status'] = 'Received';
+            break;
+          }
+        }
+
+        // Update the order document with the modified store list
+        await orderCollection.doc(orderId).update({
+          'store': stores,
+        });
+        // Check if all stores have the status 'Received'
+        bool allStoresReceived =
+            stores.every((store) => store['status'] == 'Received');
+
+        // If all stores are 'Received', update the order status to 'Received'
+        if (allStoresReceived) {
+          await orderCollection.doc(orderId).update({
+            'status': 'Received',
+          });
+        }
+      }
+    } catch (e) {
+      print('Error updating review status: $e');
+    }
+  }
 }
