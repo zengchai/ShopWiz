@@ -41,81 +41,14 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   void _filterOrders() {
-    ongoingOrders =
-        orderDataList.where((order) => order.status == 'Pick Up').toList();
-    historyOrders =
-        orderDataList.where((order) => order.status == 'Received').toList();
+    setState(() {
+      ongoingOrders =
+          orderDataList.where((order) => order.status == 'Pick Up').toList();
+      print(ongoingOrders);
+      historyOrders =
+          orderDataList.where((order) => order.status == 'Received').toList();
+    });
   }
-  // // Sample list of order data retrieved from the database
-  // final List<Map<String, dynamic>> orderDatasList = [
-  //   {
-  //     "orderId": "23",
-  //     "totalQuantity": 3,
-  //     "totalPrice": 50.00,
-  //     "status": "Pick Up",
-  //     "store": [
-  //       {
-  //         "storeName": "123",
-  //         "items": [
-  //           {
-  //             "productId": "oUgIj0ESgWiGpKw5OMHz",
-  //             "productName": "Vitamin C",
-  //             "quantity": 1,
-  //             "price": 20.00
-  //           },
-  //           {
-  //             "productId": "DaE21xjHrkI6lsNqkOtD",
-  //             "productName": "plast",
-  //             "quantity": 2,
-  //             "price": 30.00
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         "storeName": "456",
-  //         "items": [
-  //           {
-  //             "productId": "oUgIj0ESgWiGpKw5OMHz",
-  //             "productName": "Vitamin C",
-  //             "quantity": 1,
-  //             "price": 20.00
-  //           },
-  //           {
-  //             "productId": "DaE21xjHrkI6lsNqkOtD",
-  //             "productName": "plast",
-  //             "quantity": 2,
-  //             "price": 30.00
-  //           },
-  //         ],
-  //       }
-  //     ]
-  //   },
-  //   {
-  //     "orderId": "1",
-  //     "totalQuantity": 3,
-  //     "totalPrice": 50.00,
-  //     "status": "Pick Up",
-  //     "store": [
-  //       {
-  //         "storeName": "123",
-  //         "items": [
-  //           {
-  //             "productId": "csyldbqCBq1Bu7yzkUBD",
-  //             "productName": "Vitamin C",
-  //             "quantity": 1,
-  //             "price": 20.00
-  //           },
-  //           {
-  //             "productId": "XnCbdKlLMook7smUVDb9",
-  //             "productName": "Gauze",
-  //             "quantity": 2,
-  //             "price": 30.00
-  //           },
-  //         ],
-  //       }
-  //     ]
-  //   },
-  // ];
 
   @override
   Widget build(BuildContext context) {
@@ -158,12 +91,12 @@ class _OrderScreenState extends State<OrderScreen> {
                         final orderData = historyOrders[index];
                         // Build and return Order_card widget
                         return Order_Confirmation_Card(
-                                orderId: orderData.orderId,
-                                totalQuantity: orderData.totalQuantity,
-                                totalPrice: orderData.totalPrice,
-                                status: orderData.status,
-                                store: orderData.stores,
-                              );
+                          orderId: orderData.orderId,
+                          totalQuantity: orderData.totalQuantity,
+                          totalPrice: orderData.totalPrice,
+                          status: orderData.status,
+                          store: orderData.stores,
+                        );
                       },
                     ),
                   ],

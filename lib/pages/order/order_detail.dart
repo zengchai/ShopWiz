@@ -91,7 +91,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   itemCount: widget.store.length,
                   itemBuilder: (context, index) {
                     final store = widget.store[index];
-                    print(store);
                     return Card(
                       margin: const EdgeInsets.fromLTRB(10, 25, 10, 10),
                       shape: RoundedRectangleBorder(
@@ -143,6 +142,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                       height: 10,
                                     ),
                                     Order_item(
+                                      storeId: store.storeId,
                                       orderId: widget.orderId,
                                       productId: item.productId,
                                       productName: item.productName,

@@ -183,6 +183,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                                       height: 10,
                                     ),
                                     Order_item(
+                                      storeId: store.storeId,
                                       orderId: widget.orderId,
                                       productId: item.productId,
                                       productName: item.productName,

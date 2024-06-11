@@ -6,6 +6,7 @@ import 'package:shopwiz/shared/image.dart'; // Assuming you have a DatabaseServi
 
 class ReviewPopup extends StatefulWidget {
   final String uid;
+  final String storeId;
   final String productId;
   final String orderId;
   final String productName;
@@ -13,6 +14,7 @@ class ReviewPopup extends StatefulWidget {
 
   const ReviewPopup(
       {required this.uid,
+      required this.storeId,
       required this.productId,
       required this.productName,
       required this.orderId,
@@ -136,6 +138,7 @@ class _ReviewPopupState extends State<ReviewPopup> {
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       await Reviewservice(uid: widget.uid).updateReviewData(
+                        widget.storeId,
                         widget.productId,
                         widget.orderId,
                         widget.uid,
