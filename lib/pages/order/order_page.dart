@@ -3,7 +3,6 @@ import 'package:shopwiz/commons/BaseLayout.dart';
 import 'package:shopwiz/commons/BaselayoutAdmin.dart';
 import 'package:shopwiz/models/order.dart';
 import 'package:shopwiz/services/auth.dart';
-import 'package:shopwiz/services/database.dart';
 import 'package:shopwiz/services/reviewservice.dart';
 import 'package:shopwiz/shared/order_card.dart';
 import 'package:shopwiz/shared/order_confirmation_card.dart';
