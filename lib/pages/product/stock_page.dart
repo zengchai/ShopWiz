@@ -22,9 +22,12 @@ class _StockScreenState extends State<StockScreen> {
     _dbService = DatabaseService(uid: '');
   }
 
+  Future<void> reloadStockScreen() async {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Retrieve the product ID from the route arguments
     final arguments =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final String productId = arguments['productId'];
@@ -33,8 +36,7 @@ class _StockScreenState extends State<StockScreen> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FutureBuilder<Map<String, dynamic>>(
-          future:
-              _dbService.getProductData(productId), // Fetch the product data
+          future: _dbService.getProductData(productId),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -44,14 +46,7 @@ class _StockScreenState extends State<StockScreen> {
               return const Center(child: Text("No product data found"));
             }
 
-            // Display the product data
             final productData = snapshot.data!;
-
-            void reloadStockScreen() {
-              print(productData['pquantity']); // Add parentheses for print
-              setState(() {});
-            }
-
             final product = Product(
               pid: productId,
               pname: productData['pname'],
@@ -60,20 +55,17 @@ class _StockScreenState extends State<StockScreen> {
               pdescription: productData['pdescription'],
               pimageUrl: productData['imageUrl'],
             );
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Stack(
                   alignment: Alignment.topRight,
                   children: [
-                    // The product image
                     Align(
-                      alignment:
-                          Alignment.center, // Aligns in the center horizontally
+                      alignment: Alignment.center,
                       child: Padding(
-                        // Add padding around the image to avoid overlap
-                        padding: const EdgeInsets.only(
-                            top: 30), // Adds space at the top
+                        padding: const EdgeInsets.only(top: 30),
                         child: Image.network(
                           productData['imageUrl'],
                           width: 250,
@@ -83,11 +75,10 @@ class _StockScreenState extends State<StockScreen> {
                       ),
                     ),
                     Positioned(
-                      top: 0, // Position the Row with some offset
-                      right: 0, // Position at the top-right
+                      top: 0,
+                      right: 0,
                       child: Padding(
-                        padding: const EdgeInsets.only(
-                            top: 10, right: 10), // Add padding for spacing
+                        padding: const EdgeInsets.only(top: 10, right: 10),
                         child: Row(
                           children: [
                             IconButton(
@@ -108,42 +99,38 @@ class _StockScreenState extends State<StockScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 30), // Space below the image
-                // Product name
+                const SizedBox(height: 30),
                 Text(
                   productData['pname'],
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 30),
-                // Product quantity and price
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Quantity: ${productData['pquantity']}',
                       style: TextStyle(
-                        fontSize: 18, // Increase font size
-                        fontWeight: FontWeight.w500, // Slightly bolder
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
                       '\RM${double.parse(productData['pprice'].toString()).toStringAsFixed(2)}',
                       style: TextStyle(
-                        fontSize: 18, // Increase font size
-                        fontWeight: FontWeight.w500, // Slightly bolder
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 15),
-                // Product description
                 Align(
-                  alignment:
-                      Alignment.centerLeft, // Right-aligning within its parent
+                  alignment: Alignment.centerLeft,
                   child: Text(
                     productData['pdescription'],
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400),
-                    textAlign: TextAlign.left, // Right-align the text itself
+                    textAlign: TextAlign.left,
                   ),
                 ),
                 Expanded(
@@ -167,7 +154,6 @@ class _StockScreenState extends State<StockScreen> {
         TextEditingController(text: product.pprice.toString());
     final TextEditingController productQuantityController =
         TextEditingController(text: product.pquantity.toString());
-
     final TextEditingController productDescriptionController =
         TextEditingController(text: product.pdescription);
 
@@ -178,7 +164,9 @@ class _StockScreenState extends State<StockScreen> {
           await picker.pickImage(source: ImageSource.gallery);
 
       if (pickedFile != null) {
-        selectedImage = File(pickedFile.path);
+        setState(() {
+          selectedImage = File(pickedFile.path);
+        });
       }
     }
 
@@ -278,7 +266,7 @@ class _StockScreenState extends State<StockScreen> {
                           }
 
                           // Edit the product
-                          _dbService.editProduct(
+                          await _dbService.editProduct(
                             product.pid,
                             productNameController.text,
                             double.tryParse(productPriceController.text) ??
@@ -292,6 +280,7 @@ class _StockScreenState extends State<StockScreen> {
                           );
 
                           Navigator.of(context).pop(); // Close the dialog
+                          reloadStockScreen(); // Reload the screen with updated data
                         },
                         child: const Text('Edit'),
                       ),
@@ -549,8 +538,6 @@ class StoreItem extends StatelessWidget {
                   // Transfer stock and update product data if transfer quantity is valid
                   _dbService.transferStock(
                       store.storeId, productId, transferQuantity);
-                  await _dbService.updateProductData(
-                      transferQuantity, productId);
 
                   Navigator.of(context).pop();
                   reloadCallback(); // Reload the StockScreen
