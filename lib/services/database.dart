@@ -42,6 +42,7 @@ class DatabaseService {
         return {
           'username': userData['username'],
           'email': userData['email'],
+          'order': userData['orders'],
           'phonenum': userData['phonenum'],
           'uid': userData['uid'],
           'imageUrl': await getProfileImageURL(uid),

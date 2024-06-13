@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:shopwiz/services/database.dart';
+import 'package:shopwiz/services/reviewservice.dart';
 import 'package:shopwiz/shared/image.dart'; // Assuming you have a DatabaseService class defined
 
 class ReviewPopup extends StatefulWidget {
   final String uid;
+  final String storeId;
   final String productId;
   final String orderId;
   final String productName;
@@ -12,6 +14,7 @@ class ReviewPopup extends StatefulWidget {
 
   const ReviewPopup(
       {required this.uid,
+      required this.storeId,
       required this.productId,
       required this.productName,
       required this.orderId,
@@ -134,7 +137,8 @@ class _ReviewPopupState extends State<ReviewPopup> {
                 ElevatedButton(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      await DatabaseService(uid: widget.uid).updateReviewData(
+                      await Reviewservice(uid: widget.uid).updateReviewData(
+                        widget.storeId,
                         widget.productId,
                         widget.orderId,
                         widget.uid,

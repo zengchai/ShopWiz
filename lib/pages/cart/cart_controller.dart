@@ -131,7 +131,7 @@ Stream<List<CartItem>> getCartItems(String userId) {
             }
           ],
         }).toList(),
-        // 'timestamp': FieldValue.serverTimestamp(),
+        'timestamp': FieldValue.serverTimestamp(),
       };
 
       // Save the order data to Firestore
