@@ -5,6 +5,7 @@ class Store {
   final String imagePath;
   final String storeName;
   final String storeAddress;
+  late final String status;
   final List<Product> products;
 
   Store({

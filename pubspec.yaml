@@ -44,7 +44,9 @@ dependencies:
   firebase_storage: ^11.5.3
   firebase_app_check: ^0.2.1+17
   image_picker: ^1.0.8
-
+  flutter_rating_bar: ^4.0.1
+  intl: ^0.17.0
+  fl_chart: ^0.36.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

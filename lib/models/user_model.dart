@@ -1,9 +1,11 @@
+
+
 class User {
   final String uid;
   final String username;
   final String email;
   final String phonenum;
-  final String imageUrl;
+  final String imageUrl; 
 
   User({
     required this.uid,
@@ -12,6 +14,5 @@ class User {
     required this.phonenum,
     required this.imageUrl,
   });
+
 }
-
-

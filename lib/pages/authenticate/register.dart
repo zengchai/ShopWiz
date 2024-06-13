@@ -2,8 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopwiz/pages/authenticate/authenticate.dart';
-import 'package:shopwiz/pages/home/home.dart';
 import 'package:shopwiz/services/auth.dart';
+import 'package:shopwiz/services/database.dart';
+import 'package:shopwiz/pages/home/home.dart';
+import 'package:shopwiz/models/user_model.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override

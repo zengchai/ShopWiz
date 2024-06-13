@@ -81,7 +81,7 @@ class _CustomBottomAdminNavigationBarState
             Navigator.pushReplacementNamed(context, '/product');
             break;
           case 2:
-            Navigator.pushReplacementNamed(context, '/order');
+            Navigator.pushReplacementNamed(context, '/explore');
             break;
           case 3:
             Navigator.pushReplacementNamed(context, '/profile');

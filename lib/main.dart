@@ -4,17 +4,20 @@ import 'package:provider/provider.dart';
 import 'package:shopwiz/commons/NavigationProvider.dart';
 import 'package:shopwiz/firebase_options.dart';
 import 'package:shopwiz/pages/authenticate/authenticate.dart';
+import 'package:shopwiz/pages/cart/cart_page.dart';
+import 'package:shopwiz/pages/order/order_page.dart';
+import 'package:shopwiz/pages/home/home.dart';
 import 'package:shopwiz/pages/authenticate/forgot_password.dart';
 import 'package:shopwiz/pages/authenticate/register.dart';
 import 'package:shopwiz/pages/authenticate/sign_in.dart';
 import 'package:shopwiz/pages/cart/cart_page.dart';
-import 'package:shopwiz/pages/explore/explore_page.dart';
 import 'package:shopwiz/pages/home/home.dart';
 import 'package:shopwiz/pages/order/order_page.dart';
 import 'package:shopwiz/pages/product/product.dart';
 import 'package:shopwiz/pages/product/stock_page.dart';
 import 'package:shopwiz/pages/profile/profile.dart';
 import 'package:shopwiz/services/database.dart';
+import 'package:shopwiz/pages/home/productdetails.dart';
 import 'package:shopwiz/shared/loading_screen.dart';
 import 'package:shopwiz/shared/wrapper.dart';
 
@@ -49,10 +52,11 @@ class CustomPageTransitionsBuilder extends PageTransitionsBuilder {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  print('Main function is run');
+    print('Main function is run');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
 
   final DatabaseService _dbService = DatabaseService(uid: '');
 
@@ -122,11 +126,17 @@ class MyApp extends StatelessWidget {
           '/sign_in': (context) => SignInScreen(),
           '/register': (context) => RegisterScreen(),
           '/forgot_password': (context) => ForgotPasswordScreen(),
-          '/explore': (context) => ExploreScreen(),
+          '/explore': (context) => OrderScreen(),
           '/cart': (context) => CartScreen(),
           '/home': (context) => HomeScreen(),
           '/profile': (context) => ProfileScreen(),
-          '/order': (context) => OrderScreen(),
+          // Provide the productId when navigating to ExploreScreen
+          '/pdetails': (context) {
+            final Map<String, dynamic> args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+            final String productId = args['productId'];
+            return ProductDetailsScreen(productId: productId, userId: '',);
+          },
+          // '/order': (context) => OrderScreen(),
           '/product': (context) => ProductScreen(),
           '/stock': (context) => StockScreen(),
         },

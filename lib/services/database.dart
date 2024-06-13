@@ -14,8 +14,12 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('users');
   final CollectionReference productsCollection =
       FirebaseFirestore.instance.collection('products');
+       final CollectionReference productCollection =
+      FirebaseFirestore.instance.collection('products');
   final CollectionReference storesCollection =
       FirebaseFirestore.instance.collection('stores');
+        final CollectionReference reviewCollection =
+      FirebaseFirestore.instance.collection('reviews');
 
   Future<void> setUserData(
       String username, String email, String phonenum, String uid) async {
@@ -38,6 +42,7 @@ class DatabaseService {
         return {
           'username': userData['username'],
           'email': userData['email'],
+          'order': userData['orders'],
           'phonenum': userData['phonenum'],
           'uid': userData['uid'],
           'imageUrl': await getProfileImageURL(uid),
@@ -379,6 +384,28 @@ class DatabaseService {
       return null;
     }
   }
+  Future updateReviewData(String productID, String orderID, String userID,
+      String review, double rating, String userName) async {
+    try {
+      var docRef = await reviewCollection.add({
+        'userID': uid,
+        'orderID': orderID,
+        'userName': userName,
+        'rating': rating,
+        'review': review,
+      });
+
+      String docId = docRef.id;
+      await productCollection.doc(productID).update({
+        'review': FieldValue.arrayUnion([docId]),
+      });
+
+      return null; // Return the document ID
+    } catch (e) {
+      print('Error adding review: $e');
+      return null;
+    }
+  }
 
   Future<String?> getProductImageURL(String pid) async {
     try {
@@ -529,4 +556,5 @@ class DatabaseService {
       productData['imageUrl'],
     );
   }
+  
 }
