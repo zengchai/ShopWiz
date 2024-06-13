@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shopwiz/commons/BaseLayout.dart';
-import 'package:shopwiz/models/user_model.dart';
 import 'package:shopwiz/pages/cart/CartItem.dart';
 import 'package:shopwiz/pages/cart/cart_controller.dart';
 import 'package:shopwiz/services/firebase_service.dart';
 import 'package:shopwiz/pages/home/model/product.dart';
+
 class ProductDetailsScreen extends StatefulWidget {
   final String productId;
   final String userId;
@@ -20,6 +20,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _quantity = 1; // Default quantity to 1
   final CartController _cartController = CartController();
   bool _isLoading = false; // To manage loading state
+  List<Map<String, dynamic>> _stores = []; // List to store the store data
+  String _selectedStoreName = 'Select a location'; // Default selection
+  String _selectedStoreId = ''; // Define _selectedStoreId variable to hold the selected store ID
 
   @override
   void initState() {
@@ -36,10 +39,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       if (mounted) {
         setState(() {
           _product = product;
+          _fetchStoreDataForProduct(widget.productId);
         });
       }
     } catch (error) {
-      _showDialog('Error', 'Failed to fetch product information.');
       print("Error fetching product: $error");
     } finally {
       if (mounted) {
@@ -47,6 +50,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _fetchStoreDataForProduct(String productId) async {
+    try {
+      List<Map<String, dynamic>> stores = await FirebaseService().getAllStoresWithProductStock(productId);
+      setState(() {
+        _stores = stores;
+      });
+    } catch (error) {
+      print('Error fetching store data for product: $error');
     }
   }
 
@@ -64,7 +78,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
   }
 
-  void _addToCart() async {
+  void _addToCart(String storeId) async { // Change parameter to storeId
     if (_quantity <= 0) {
       _showDialog('Error', 'Quantity must be greater than 0.');
       return;
@@ -75,22 +89,31 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         setState(() {
           _isLoading = true;
         });
+
         final cartItem = CartItem(
           pid: _product!.pid,
           name: _product!.pname,
           image: _product!.pimageUrl,
           quantity: _quantity,
           price: _product!.pprice,
+          store: _selectedStoreName,
+          storeId: storeId, // Pass selected store ID
         );
 
         await _cartController.addToCart(cartItem);
-        _showDialog('Success', '$_quantity ${_product!.pname} added to cart successfully!');
+        _showDialog(
+          'Success',
+          '$_quantity ${_product!.pname} added to cart successfully from $_selectedStoreName!',
+        );
       } else {
         _showDialog('Error', 'Failed to fetch product information.');
       }
     } catch (error) {
       print("Error adding to cart: $error");
-      _showDialog('Error', 'Failed to add product to cart. Please try again later.');
+      _showDialog(
+        'Error',
+        'Failed to add product to cart. Please try again later.',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -115,6 +138,53 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               child: Text("OK"),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showAvailabilityList(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Store Availability'),
+          content: Container(
+            width: double.maxFinite,
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: FirebaseService().getAllStoresWithProductStock(widget.productId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  List<Map<String, dynamic>>? stores = snapshot.data;
+                  if (stores != null && stores.isNotEmpty) {
+                    return ListView.builder(
+                      itemCount: stores.length,
+                      itemBuilder: (context, index) {
+                        return ProductCard(
+                          storeName: stores[index]['sname'] as String,
+                          storeId: stores[index]['sid'] as String? ?? '', // Handle null value
+                          stockQuantity: stores[index]['storestock'] as int,
+                          onTap: () {
+                            setState(() {
+                              _selectedStoreName = stores[index]['sname'] as String;
+                              _selectedStoreId = stores[index]['sid'] as String? ?? ''; // Handle null value
+                            });
+                            Navigator.of(context).pop();
+                          },
+                        );
+                      },
+                    );
+                  } else {
+                    return Text('No stores available');
+                  }
+                }
+              },
+            ),
+          ),
         );
       },
     );
@@ -185,9 +255,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             ),
                             SizedBox(width: 16.0),
                             Text(
-                              _product != null
-                                  ? 'Quantity: ${_product!.pquantity}'
-                                  : 'Loading...',
+                              _product != null ? 'Quantity: ${_product!.pquantity}' : 'Loading...',
                               style: TextStyle(fontSize: 16.0, color: Colors.black87),
                             ),
                           ],
@@ -207,15 +275,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
                         ),
                         SizedBox(height: 8.0),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.5,
-                          height: 40.0,
-                          color: Colors.grey[300],
-                          // Placeholder for location selection
-                          child: Center(
+                        InkWell(
+                          onTap: () {
+                            _showAvailabilityList(context);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              'Location Picker',
-                              style: TextStyle(fontSize: 16.0, color: Colors.black54),
+                              _selectedStoreName,
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                color: Colors.black87,
+                              ),
                             ),
                           ),
                         ),
@@ -246,7 +317,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             ),
                             SizedBox(width: 16.0),
                             ElevatedButton(
-                              onPressed: _addToCart,
+                              onPressed: () {
+                                _addToCart(_selectedStoreId); // Pass the store ID
+                              },
                               child: Text(
                                 'Add to Cart',
                                 style: TextStyle(fontSize: 16.0),
@@ -260,6 +333,32 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+class ProductCard extends StatelessWidget {
+  final String storeName;
+  final String storeId; // New parameter for store ID
+  final int stockQuantity;
+  final VoidCallback onTap;
+
+  const ProductCard({
+    Key? key,
+    required this.storeName,
+    required this.storeId,
+    required this.stockQuantity,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(storeName),
+        subtitle: Text('Stock Quantity: $stockQuantity'),
+        onTap: onTap,
+      ),
     );
   }
 }
