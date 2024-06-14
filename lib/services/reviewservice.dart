@@ -305,16 +305,16 @@ class Reviewservice {
     DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     QuerySnapshot ordersSnapshot = await orderCollection
-        .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
-        .where('timestamp', isLessThanOrEqualTo: endOfDay)
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
         .get();
 
     int totalOrders = ordersSnapshot.docs.length;
     double totalPrice = 0.0;
 
     for (var doc in ordersSnapshot.docs) {
-      totalPrice +=
-          doc['price']; // Adjust the field name as per your Firestore schema
+      totalPrice += doc[
+          'totalPrice']; // Adjust the field name as per your Firestore schema
     }
 
     return {
