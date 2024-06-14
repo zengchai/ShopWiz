@@ -23,3 +23,9 @@ samples, guidance on mobile development, and a full API reference.
 email: admin1@gmail.com
 pw: admin1
 uid: 7aXevcNf3Cahdmk9l5jLRASw5QO2
+
+To get new f1chart:
+git clone https://github.com/imaNNeoFighT/fl_chart.git
+
+start ms-settings:developers
+

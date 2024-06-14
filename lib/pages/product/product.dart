@@ -15,6 +15,7 @@ class ProductScreen extends StatefulWidget {
 
 class _ProductScreenState extends State<ProductScreen> {
   String? _imagePath;
+  String? _searchQuery;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
@@ -24,21 +25,6 @@ class _ProductScreenState extends State<ProductScreen> {
     bool showCustomer = currentUser?.uid != '7aXevcNf3Cahdmk9l5jLRASw5QO2';
 
     return BaseLayoutAdmin(
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [],
-            ),
-          ),
-          Expanded(
-            child: ProductItemScreen(),
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           _showAddProductDialog(
@@ -46,6 +32,44 @@ class _ProductScreenState extends State<ProductScreen> {
         },
         icon: const Icon(Icons.add),
         label: const Text('Add Product'),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search products...',
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: () {
+                          setState(() {
+                            // Trigger search with current query
+                            // Assuming you use Firebase query here
+                            // Modify your ProductItemScreen to use this _searchQuery
+                          });
+                        },
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim(); // Update search query
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ProductItemScreen(searchQuery: _searchQuery),
+          ),
+        ],
       ),
     );
   }
@@ -273,12 +297,14 @@ class _ProductScreenState extends State<ProductScreen> {
 class ProductItemScreen extends StatelessWidget {
   final DatabaseService _dbService =
       DatabaseService(uid: ''); // Database service instance
+  final String? searchQuery; // New parameter for search query
 
+  ProductItemScreen({this.searchQuery});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _dbService.retrieveProductList(),
+      body: StreamBuilder<List<Product>>(
+        stream: _dbService.retrieveSearchProductList(productName: searchQuery),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -288,14 +314,12 @@ class ProductItemScreen extends StatelessWidget {
             return const Center(
               child: Text("Error loading products"), // Error state
             );
-          } else if (snapshot.hasData && snapshot.data!.isEmpty) {
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
               child: Text("No products available"), // Empty state
             );
-          } else if (snapshot.hasData) {
-            List<Product> products = snapshot.data!.map((data) {
-              return Product.fromMap(data);
-            }).toList();
+          } else {
+            List<Product> products = snapshot.data!;
 
             return ListView.builder(
               itemCount: products.length,
@@ -373,10 +397,6 @@ class ProductItemScreen extends StatelessWidget {
                   ),
                 );
               },
-            );
-          } else {
-            return const Center(
-              child: Text("Unexpected error"), // Fallback case
             );
           }
         },

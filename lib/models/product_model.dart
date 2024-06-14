@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Product {
   final String pid;
   final String pname;
@@ -25,4 +27,6 @@ class Product {
       pimageUrl: data['pimageUrl'] ?? '',
     );
   }
+
+  static fromSnapshot(QueryDocumentSnapshot<Object?> doc) {}
 }
