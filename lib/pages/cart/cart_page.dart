@@ -76,10 +76,11 @@ class _CartScreenState extends State<CartScreen> {
     print('Item added to cart');
   }
 
-  void _placeOrder(List<CartItem> cartItems) async {
+  void _placeOrder(List<CartItem> selectedCartItems) async {
     try {
       // Calculate total selected subtotal
-      double totalSelectedSubtotal = _calculateTotalSelectedSubtotal(cartItems);
+      double totalSelectedSubtotal =
+          _calculateTotalSelectedSubtotal(selectedCartItems);
 
       // Get the current user's UID
       User? currentUser = _auth.currentUser;
@@ -90,11 +91,10 @@ class _CartScreenState extends State<CartScreen> {
 
       // Call placeOrder function from CartController to place the order
       await _cartController.placeOrder(
-          cartItems, totalSelectedSubtotal, userId);
+          selectedCartItems, totalSelectedSubtotal, userId);
 
       // Delete the selected items from the cart
-      List<String> selectedPids = _selectedItems.toList();
-      for (String pid in selectedPids) {
+      for (String pid in _selectedItems) {
         await _cartController.deleteCartItem(pid, userId);
       }
 
@@ -159,53 +159,54 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  void _showAvailabilityList(BuildContext context, CartItem cartItem) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Store Availability'),
-          content: Container(
-            width: double.maxFinite,
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future:
-                  FirebaseService().getAllStoresWithProductStock(cartItem.pid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator(); // Show loading indicator while data is fetched
-                } else if (snapshot.hasError) {
-                  return Text(
-                      'Error: ${snapshot.error}'); // Show error message if there's an error
+void _showAvailabilityList(BuildContext context, CartItem cartItem) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Store Availability'),
+        content: Container(
+          width: double.maxFinite,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: FirebaseService().getAllStoresWithProductStock(cartItem.pid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator(); // Show loading indicator while data is fetched
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}'); // Show error message if there's an error
+              } else {
+                List<Map<String, dynamic>>? stores = snapshot.data;
+                if (stores != null && stores.isNotEmpty) {
+                  return ListView.builder(
+                    itemCount: stores.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(stores[index]['sname'] as String),
+                        onTap: () async {
+                          String selectedStore = stores[index]['sname'] as String;
+                          setState(() {
+                            // Update the store name of the cart item
+                            cartItem.store = selectedStore;
+                          });
+                          // Update the store in the database
+                          await _cartController.updateCartItemStore(cartItem.pid, selectedStore, _userId);
+                          Navigator.of(context).pop();
+                        },
+                      );
+                    },
+                  );
                 } else {
-                  List<Map<String, dynamic>>? stores = snapshot.data;
-                  if (stores != null && stores.isNotEmpty) {
-                    return ListView.builder(
-                      itemCount: stores.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(stores[index]['sname'] as String),
-                          onTap: () {
-                            setState(() {
-                              // Update the store name of the cart item
-                              cartItem.store = stores[index]['sname'] as String;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                        );
-                      },
-                    );
-                  } else {
-                    return Text(
-                        'No stores available'); // Show message if no stores are available
-                  }
+                  return Text('No stores available'); // Show message if no stores are available
                 }
-              },
-            ),
+              }
+            },
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   double _calculateTotalSelectedSubtotal(List<CartItem> cartItems) {
     double total = 0;
@@ -340,7 +341,10 @@ class _CartScreenState extends State<CartScreen> {
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        _placeOrder(cartItems);
+                        List<CartItem> selectedCartItems = cartItems
+                            .where((item) => _selectedItems.contains(item.pid))
+                            .toList();
+                        _placeOrder(selectedCartItems);
                       },
                       child: Text('Place Order'),
                     ),

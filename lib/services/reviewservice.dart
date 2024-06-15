@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:shopwiz/models/order.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shopwiz/models/review.dart';
 import 'package:shopwiz/services/database.dart';
 
 class Reviewservice {
@@ -321,5 +322,34 @@ class Reviewservice {
       'totalOrders': totalOrders,
       'totalPrice': totalPrice,
     };
+  }
+
+  Future<List<Review>> getReviewsByProductId(String productId) async {
+    try {
+      // Fetch the product document
+      DocumentSnapshot productSnapshot =
+          await productCollection.doc(productId).get();
+
+      if (productSnapshot.exists) {
+        List<dynamic> reviewIds = productSnapshot['review'];
+
+        // Fetch the reviews based on the reviewIds
+        List<Review> reviews = [];
+        for (String reviewId in reviewIds) {
+          DocumentSnapshot reviewSnapshot =
+              await reviewCollection.doc(reviewId).get();
+          if (reviewSnapshot.exists) {
+            reviews.add(reviewSnapshot.data() as Review);
+          }
+        }
+
+        return reviews;
+      } else {
+        throw Exception("Product not found");
+      }
+    } catch (error) {
+      print("Error fetching reviews: $error");
+      throw error;
+    }
   }
 }

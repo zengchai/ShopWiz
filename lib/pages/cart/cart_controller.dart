@@ -155,4 +155,20 @@ class CartController {
       throw error;
     }
   }
+
+  Future<void> updateCartItemStore(
+      String pid, String store, String userId) async {
+    try {
+      // Get a reference to the user's document
+      DocumentReference userDocRef = _firestore.collection('users').doc(userId);
+
+      // Update the store of the cart item
+      await userDocRef.collection('cart').doc(pid).update({
+        'store': store,
+      });
+    } catch (error) {
+      print("Error updating cart item store: $error");
+      throw error;
+    }
+  }
 }
