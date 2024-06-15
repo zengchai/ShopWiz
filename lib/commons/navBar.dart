@@ -52,8 +52,8 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.explore),
-          label: 'Explore',
+          icon: Icon(Icons.description),
+          label: 'Order',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart),

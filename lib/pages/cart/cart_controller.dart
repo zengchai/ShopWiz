@@ -142,6 +142,12 @@ class CartController {
         'date': FieldValue.serverTimestamp(),
       };
 
+      DocumentReference userDocRef = _firestore.collection('users').doc(userId);
+
+      // Update the user's orders field
+      await userDocRef.update({
+        'orders': FieldValue.arrayUnion([orderId])
+      });
       // Save the order data to Firestore
       await _firestore.collection('orders').doc(orderId).set(orderData);
     } catch (error) {

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:shopwiz/models/order.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shopwiz/models/review.dart';
 import 'package:shopwiz/services/database.dart';
 
 class Reviewservice {
@@ -305,21 +306,50 @@ class Reviewservice {
     DateTime endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     QuerySnapshot ordersSnapshot = await orderCollection
-        .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
-        .where('timestamp', isLessThanOrEqualTo: endOfDay)
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
         .get();
 
     int totalOrders = ordersSnapshot.docs.length;
     double totalPrice = 0.0;
 
     for (var doc in ordersSnapshot.docs) {
-      totalPrice +=
-          doc['price']; // Adjust the field name as per your Firestore schema
+      totalPrice += doc[
+          'totalPrice']; // Adjust the field name as per your Firestore schema
     }
 
     return {
       'totalOrders': totalOrders,
       'totalPrice': totalPrice,
     };
+  }
+
+  Future<List<Review>> getReviewsByProductId(String productId) async {
+    try {
+      // Fetch the product document
+      DocumentSnapshot productSnapshot =
+          await productCollection.doc(productId).get();
+
+      if (productSnapshot.exists) {
+        List<dynamic> reviewIds = productSnapshot['review'];
+        print(reviewIds);
+        // Fetch the reviews based on the reviewIds
+        List<Review> reviews = [];
+        for (String reviewId in reviewIds) {
+          DocumentSnapshot reviewSnapshot =
+              await reviewCollection.doc(reviewId).get();
+          if (reviewSnapshot.exists) {
+            reviews.add(Review.fromFirestore(reviewSnapshot));
+          }
+        }
+
+        return reviews;
+      } else {
+        throw Exception("Product not found");
+      }
+    } catch (error) {
+      print("Error fetching reviews: $error");
+      throw error;
+    }
   }
 }
