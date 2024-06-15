@@ -117,7 +117,7 @@ Stream<List<CartItem>> getCartItems(String userId) {
       Map<String, dynamic> orderData = {
         'orderId': orderId,
         'userId': userId,
-        'status': 'Pick up',
+        'status': 'Pick Up',
         'totalPrice': totalSelectedSubtotal,
         'totalQuantity': cartItems.fold(0, (sum, item) => sum + item.quantity),
         'store': cartItems.map((item) => {
@@ -131,7 +131,7 @@ Stream<List<CartItem>> getCartItems(String userId) {
             }
           ],
         }).toList(),
-        'timestamp': FieldValue.serverTimestamp(),
+        'date': FieldValue.serverTimestamp(),
       };
 
       // Save the order data to Firestore
