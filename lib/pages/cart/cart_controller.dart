@@ -10,54 +10,61 @@ import 'package:shopwiz/models/user_model.dart';
 class CartController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
- Future<void> addToCart(CartItem cartItem) async {
-  try {
-    // Retrieve the current user
-    FirebaseAuth.User? currentUser = FirebaseAuth.FirebaseAuth.instance.currentUser;
-    
-    // Check if the current user is authenticated
-    if (currentUser == null) {
-      throw Exception("User not authenticated");
+  Future<void> addToCart(CartItem cartItem) async {
+    try {
+      // Retrieve the current user
+      FirebaseAuth.User? currentUser =
+          FirebaseAuth.FirebaseAuth.instance.currentUser;
+
+      // Check if the current user is authenticated
+      if (currentUser == null) {
+        throw Exception("User not authenticated");
+      }
+
+      // Get the user ID
+      String userId = currentUser.uid;
+
+      // Get a reference to the user's document
+      DocumentReference userDocRef = _firestore.collection('users').doc(userId);
+
+      // Check if the cart item already exists
+      DocumentSnapshot cartItemSnapshot =
+          await userDocRef.collection('cart').doc(cartItem.pid).get();
+      if (cartItemSnapshot.exists) {
+        // Cart item exists, update its quantity by adding the new quantity
+        int existingQuantity = cartItemSnapshot['quantity'];
+        await userDocRef.collection('cart').doc(cartItem.pid).update({
+          'quantity': existingQuantity + cartItem.quantity,
+        });
+      } else {
+        // Cart item doesn't exist, create a new one
+        await userDocRef
+            .collection('cart')
+            .doc(cartItem.pid)
+            .set(cartItem.toJson());
+      }
+    } catch (error) {
+      print("Error adding to cart: $error");
+      throw error;
     }
+  }
 
-    // Get the user ID
-    String userId = currentUser.uid;
+  Stream<List<CartItem>> getCartItems(String userId) {
+    try {
+      // Get a reference to the user's document
+      DocumentReference userDocRef = _firestore.collection('users').doc(userId);
 
-    // Get a reference to the user's document
-    DocumentReference userDocRef = _firestore.collection('users').doc(userId);
-
-    // Check if the cart item already exists
-    DocumentSnapshot cartItemSnapshot = await userDocRef.collection('cart').doc(cartItem.pid).get();
-    if (cartItemSnapshot.exists) {
-      // Cart item exists, update its quantity by adding the new quantity
-      int existingQuantity = cartItemSnapshot['quantity'];
-      await userDocRef.collection('cart').doc(cartItem.pid).update({
-        'quantity': existingQuantity + cartItem.quantity,
-      });
-    } else {
-      // Cart item doesn't exist, create a new one
-      await userDocRef.collection('cart').doc(cartItem.pid).set(cartItem.toJson());
+      // Return a stream of cart items from the 'cart' subcollection
+      return userDocRef.collection('cart').snapshots().map((snapshot) =>
+          snapshot.docs.map((doc) => CartItem.fromSnapshot(doc)).toList());
+    } catch (error) {
+      print("Error getting cart items: $error");
+      throw error;
     }
-  } catch (error) {
-    print("Error adding to cart: $error");
-    throw error;
   }
-}
-Stream<List<CartItem>> getCartItems(String userId) {
-  try {
-    // Get a reference to the user's document
-    DocumentReference userDocRef = _firestore.collection('users').doc(userId);
 
-    // Return a stream of cart items from the 'cart' subcollection
-    return userDocRef.collection('cart').snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => CartItem.fromSnapshot(doc))
-        .toList());
-  } catch (error) {
-    print("Error getting cart items: $error");
-    throw error;
-  }
-}
- Future<void> updateCartItemQuantity(String pid, int quantity, String userId) async {
+  Future<void> updateCartItemQuantity(
+      String pid, int quantity, String userId) async {
     try {
       // Get a reference to the user's document
       DocumentReference userDocRef = _firestore.collection('users').doc(userId);
@@ -82,7 +89,6 @@ Stream<List<CartItem>> getCartItems(String userId) {
     }
   }
 
-
   Future<int> getCartItemQuantity(String pid, String userId) async {
     try {
       // Get a reference to the cart item document
@@ -105,10 +111,10 @@ Stream<List<CartItem>> getCartItems(String userId) {
       print("Error getting cart item quantity: $error");
       throw error;
     }
-    
   }
- Future<void> placeOrder(
-      List<CartItem> cartItems, double totalSelectedSubtotal, String userId) async {
+
+  Future<void> placeOrder(List<CartItem> cartItems,
+      double totalSelectedSubtotal, String userId) async {
     try {
       // Generate a new order ID
       String orderId = _firestore.collection('orders').doc().id;
@@ -120,17 +126,19 @@ Stream<List<CartItem>> getCartItems(String userId) {
         'status': 'Pick Up',
         'totalPrice': totalSelectedSubtotal,
         'totalQuantity': cartItems.fold(0, (sum, item) => sum + item.quantity),
-        'store': cartItems.map((item) => {
-          'storeId': item.storeId,
-          'items': [
-            {
-              'productId': item.pid,
-              'productName': item.name,
-              'quantity': item.quantity,
-              'price': item.price,
-            }
-          ],
-        }).toList(),
+        'store': cartItems
+            .map((item) => {
+                  'storeId': item.storeId,
+                  'items': [
+                    {
+                      'productId': item.pid,
+                      'productName': item.name,
+                      'quantity': item.quantity,
+                      'price': item.price,
+                    }
+                  ],
+                })
+            .toList(),
         'date': FieldValue.serverTimestamp(),
       };
 
@@ -141,22 +149,20 @@ Stream<List<CartItem>> getCartItems(String userId) {
       throw error;
     }
   }
-  Future<void> updateCartItemStore(String pid, String store, String userId) async {
-  try {
-    // Get a reference to the user's document
-    DocumentReference userDocRef = _firestore.collection('users').doc(userId);
 
-    // Update the store of the cart item
-    await userDocRef.collection('cart').doc(pid).update({
-      'store': store,
-    });
-  } catch (error) {
-    print("Error updating cart item store: $error");
-    throw error;
+  Future<void> updateCartItemStore(
+      String pid, String store, String userId) async {
+    try {
+      // Get a reference to the user's document
+      DocumentReference userDocRef = _firestore.collection('users').doc(userId);
+
+      // Update the store of the cart item
+      await userDocRef.collection('cart').doc(pid).update({
+        'store': store,
+      });
+    } catch (error) {
+      print("Error updating cart item store: $error");
+      throw error;
+    }
   }
-}
-
-
-
-
 }
