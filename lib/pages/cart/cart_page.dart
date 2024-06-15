@@ -77,51 +77,62 @@ class _CartScreenState extends State<CartScreen> {
     print('Item added to cart');
   }
 
-  void _placeOrder(List<CartItem> selectedCartItems) async {
-    try {
-      // Calculate total selected subtotal
-      double totalSelectedSubtotal =
-          _calculateTotalSelectedSubtotal(selectedCartItems);
-
-      // Get the current user's UID
-      User? currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception("User not authenticated");
-      }
-      String userId = currentUser.uid;
-
-      // Call placeOrder function from CartController to place the order
-      await _cartController.placeOrder(
-          selectedCartItems, totalSelectedSubtotal, userId);
-
-      // Delete the selected items from the cart
-      for (String pid in _selectedItems) {
-        await _cartController.deleteCartItem(pid, userId);
-      }
-
-      // Clear the selected items list after placing the order
-      setState(() {
-        _selectedItems.clear();
-      });
-
-      // Show a success message or navigate to a confirmation screen
+void _placeOrder(List<CartItem> selectedCartItems) async {
+  try {
+    // Check if no items are selected
+    if (selectedCartItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Order placed successfully!'),
+          content: Text('Please select at least one item to place an order.'),
           duration: Duration(seconds: 2),
         ),
       );
-    } catch (error) {
-      // Handle error
-      print("Error placing order: $error");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to place order. Please try again later.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      return; // Exit function if no items are selected
     }
+
+    // Calculate total selected subtotal
+    double totalSelectedSubtotal =
+        _calculateTotalSelectedSubtotal(selectedCartItems);
+
+    // Get the current user's UID
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      throw Exception("User not authenticated");
+    }
+    String userId = currentUser.uid;
+
+    // Call placeOrder function from CartController to place the order
+    await _cartController.placeOrder(
+        selectedCartItems, totalSelectedSubtotal, userId);
+
+    // Delete the selected items from the cart
+    for (String pid in _selectedItems) {
+      await _cartController.deleteCartItem(pid, userId);
+    }
+
+    // Clear the selected items list after placing the order
+    setState(() {
+      _selectedItems.clear();
+    });
+
+    // Show a success message or navigate to a confirmation screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Order placed successfully!'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  } catch (error) {
+    // Handle error
+    print("Error placing order: $error");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to place order. Please try again later.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
+}
 
 
   void _subtractQuantity(String pid) async {
