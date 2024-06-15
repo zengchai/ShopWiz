@@ -47,6 +47,11 @@ dependencies:
   flutter_rating_bar: ^4.0.1
   intl: ^0.17.0
   fl_chart: ^0.36.4  
+  url_launcher_android: ^6.3.2
+  url_launcher: ^6.3.0
+  google_maps_flutter: ^2.6.1
+  
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

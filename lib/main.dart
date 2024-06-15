@@ -50,28 +50,34 @@ class CustomPageTransitionsBuilder extends PageTransitionsBuilder {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
     print('Main function is run');
-  await Firebase.initializeApp(
+      await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-
+  
   final DatabaseService _dbService = DatabaseService(uid: '');
 
-  List<Map<String, dynamic>> stores = [
+List<Map<String, dynamic>> stores = [
     {
-      'name': 'Vitacare Taman Impian Emas',
-      'address': '135/2 Jalan Impiana Emas',
+      'name': 'BIG Pharmacy Impian Emas',
+      'address': '25, Jalan Impian Emas 3, Taman Impian Emas, 81300 Skudai, Johor',
       'imagePath': 'VitacareTamanImpianEmas.png',
+      'latitude': 1.54110,
+      'longitude': 103.68316,
     },
     {
-      'name': 'Vitacare Taman Pelangi',
-      'address': '332/21 Jalan Pelangi, 5/6 Taman Pelangi',
+      'name': 'BIG Pharmacy Taman Pelangi',
+      'address': '56, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor',
       'imagePath': 'VitacareTamanPelangi.png',
+      'latitude': 1.48172,
+      'longitude': 103.77499,
     },
     {
-      'name': 'Vitacare Taman Universiti',
-      'address': '6 Blok 3/2 Taman Universiti',
+      'name': 'BIG Pharmarcy Taman Universiti',
+      'address': '67 & 68, Jln Kebudayaan 4, Taman Universiti, 81300 Skudai, Johor',
       'imagePath': 'VitacareTamanUniversiti.png',
+      'latitude': 1.54092,
+      'longitude': 103.62898,
     },
   ];
 
@@ -80,6 +86,8 @@ void main() async {
       store['name'],
       store['address'],
       store['imagePath'],
+      store['latitude'],
+      store['longitude'],
     );
   }
 

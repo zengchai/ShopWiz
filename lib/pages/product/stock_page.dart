@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shopwiz/commons/BaselayoutAdmin.dart';
@@ -102,7 +101,7 @@ class _StockScreenState extends State<StockScreen> {
                 const SizedBox(height: 30),
                 Text(
                   productData['pname'],
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 30),
                 Row(
@@ -110,14 +109,14 @@ class _StockScreenState extends State<StockScreen> {
                   children: [
                     Text(
                       'Quantity: ${productData['pquantity']}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
                       '\RM${double.parse(productData['pprice'].toString()).toStringAsFixed(2)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                       ),
@@ -129,7 +128,7 @@ class _StockScreenState extends State<StockScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     productData['pdescription'],
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w400),
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w400),
                     textAlign: TextAlign.left,
                   ),
                 ),
@@ -188,7 +187,7 @@ class _StockScreenState extends State<StockScreen> {
                           IconButton(
                             icon: const Icon(Icons.close),
                             onPressed: () {
-                              Navigator.of(context).pop(); // Close the dialog
+                              Navigator.of(context).pop();
                             },
                           ),
                         ],
@@ -201,10 +200,9 @@ class _StockScreenState extends State<StockScreen> {
                       const SizedBox(height: 20),
                       GestureDetector(
                         onTap: () async {
-                          await pickImage(product.pid); // Select the image
-                          setState(() {}); // Update the UI
+                          await pickImage(product.pid);
+                          setState(() {});
                         },
-                        // Trigger image selection
                         child: Container(
                           height: 100,
                           width: 100,
@@ -258,14 +256,12 @@ class _StockScreenState extends State<StockScreen> {
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () async {
-                          // If an image is selected, upload it and get the image URL
                           String? imageUrl;
                           if (selectedImage != null) {
                             imageUrl = await _dbService.uploadProductImage(
                                 selectedImage!, product.pid);
                           }
 
-                          // Edit the product
                           await _dbService.editProduct(
                             product.pid,
                             productNameController.text,
@@ -274,13 +270,11 @@ class _StockScreenState extends State<StockScreen> {
                             int.tryParse(productQuantityController.text) ??
                                 product.pquantity,
                             productDescriptionController.text,
-                            imageUrl ??
-                                product
-                                    .pimageUrl, // Use selected image URL if available, otherwise use the existing product image URL
+                            imageUrl ?? product.pimageUrl,
                           );
 
-                          Navigator.of(context).pop(); // Close the dialog
-                          reloadStockScreen(); // Reload the screen with updated data
+                          Navigator.of(context).pop();
+                          reloadStockScreen();
                         },
                         child: const Text('Edit'),
                       ),
@@ -303,9 +297,9 @@ class _StockScreenState extends State<StockScreen> {
           child: SingleChildScrollView(
             child: Container(
               padding: const EdgeInsets.all(20),
-              constraints: BoxConstraints(
+              constraints: const BoxConstraints(
                   maxWidth: 400,
-                  maxHeight: 200), // Set maximum width and height
+                  maxHeight: 200),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -318,24 +312,23 @@ class _StockScreenState extends State<StockScreen> {
                     'Are you sure you want to delete this product?',
                     style: TextStyle(fontSize: 16),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
                         onPressed: () {
                           _dbService
-                              .deleteProduct(product.pid); // Delete the product
+                              .deleteProduct(product.pid);
                           Navigator.of(context).pop();
                           Navigator.of(context)
-                              .pushReplacementNamed('/home'); // Go back to home
-                          // Close dialog
+                              .pushReplacementNamed('/home');
                         },
                         child: const Text('Yes'),
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pop(); // Close dialog
+                          Navigator.of(context).pop();
                         },
                         child: const Text('No'),
                       ),
@@ -353,7 +346,7 @@ class _StockScreenState extends State<StockScreen> {
 
 class StoreList extends StatelessWidget {
   final String productId;
-  final Function reloadCallback; // Callback function
+  final Function reloadCallback;
 
   final DatabaseService _dbService = DatabaseService(uid: '');
 
@@ -378,15 +371,14 @@ class StoreList extends StatelessWidget {
           return Expanded(
             child: ListView.builder(
               shrinkWrap: true,
-              physics: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               itemCount: stores.length,
               itemBuilder: (context, index) {
                 return StoreItem(
                   store: Store.fromMap(stores[index]),
                   productId: productId,
                   dbService: _dbService,
-                  reloadCallback:
-                      reloadCallback, // Pass callback function to StoreItem
+                  reloadCallback: reloadCallback,
                 );
               },
             ),
@@ -403,7 +395,7 @@ class StoreItem extends StatelessWidget {
   final Store store;
   final String productId;
   final DatabaseService dbService;
-  final Function reloadCallback; // Callback function
+  final Function reloadCallback;
 
   StoreItem({
     required this.store,
@@ -510,12 +502,10 @@ class StoreItem extends StatelessWidget {
                 int transferQuantity =
                     int.tryParse(stockQuantityController.text) ?? 0;
 
-                // Retrieve the current product data
                 final productData = await _dbService.getProductData(productId);
                 final int currentQuantity = productData['pquantity'];
 
                 if (transferQuantity > currentQuantity) {
-                  // Display an alert dialog if transfer quantity exceeds current quantity
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
@@ -535,12 +525,11 @@ class StoreItem extends StatelessWidget {
                     },
                   );
                 } else {
-                  // Transfer stock and update product data if transfer quantity is valid
                   _dbService.transferStock(
                       store.storeId, productId, transferQuantity);
 
                   Navigator.of(context).pop();
-                  reloadCallback(); // Reload the StockScreen
+                  reloadCallback();
                 }
               },
               child: const Text('Transfer'),

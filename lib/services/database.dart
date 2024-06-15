@@ -113,57 +113,62 @@ class DatabaseService {
     }
   }
 
-//Create store
-  Future<void> createStore(
-    String sname,
-    String saddress,
-    String imagePath,
-  ) async {
-    try {
-      // Check if the store already exists in Firestore
-      QuerySnapshot existingStores = await storesCollection
-          .where('sname', isEqualTo: sname) // Checking by store name
-          .get();
+  //create store
+Future<void> createStore(
+  String sname,
+  String saddress,
+  String imagePath,
+  double latitude,
+  double longitude,
+) async {
+  try {
+    // Check if the store already exists in Firestore
+    QuerySnapshot existingStores = await storesCollection
+        .where('sname', isEqualTo: sname) // Checking by store name
+        .get();
 
-      if (existingStores.docs.isNotEmpty) {
-        print("Store already exists with the name: $sname");
-        return; // Exit if the store already exists
-      }
-
-      // Check if the image file exists
-      Uint8List imageBytes = await _getImageAssetBytes(imagePath);
-      if (imageBytes.isEmpty) {
-        print("Image file does not exist at path: $imagePath");
-        return; // If the file doesn't exist, stop the process
-      }
-
-      // Generate a unique store ID
-      String sid = storesCollection.doc().id;
-
-      // Upload the image to Firebase Storage
-      Reference storageRef =
-          FirebaseStorage.instance.ref().child('StoreImages/$sid.jpg');
-      UploadTask uploadTask = storageRef.putData(imageBytes);
-
-      // Get the download URL for the uploaded image
-      TaskSnapshot storageTaskSnapshot = await uploadTask;
-      String simageUrl = await storageTaskSnapshot.ref.getDownloadURL();
-
-      // Create the store document in Firestore
-      await storesCollection.doc(sid).set({
-        'sid': sid,
-        'sname': sname,
-        'saddress': saddress,
-        'simageurl': simageUrl,
-        'products': [], // Initialize products list to empty
-      });
-      await updateStoreProduct(); // Update store products after store creation
-
-      print("Store created successfully");
-    } catch (e) {
-      print("Error creating store: $e");
+    if (existingStores.docs.isNotEmpty) {
+      print("Store already exists with the name: $sname");
+      return; // Exit if the store already exists
     }
+
+    // Check if the image file exists
+    Uint8List imageBytes = await _getImageAssetBytes(imagePath);
+    if (imageBytes.isEmpty) {
+      print("Image file does not exist at path: $imagePath");
+      return; // If the file doesn't exist, stop the process
+    }
+
+    // Generate a unique store ID
+    String sid = storesCollection.doc().id;
+
+    // Upload the image to Firebase Storage
+    Reference storageRef =
+        FirebaseStorage.instance.ref().child('StoreImages/$sid.jpg');
+    UploadTask uploadTask = storageRef.putData(imageBytes);
+
+    // Get the download URL for the uploaded image
+    TaskSnapshot storageTaskSnapshot = await uploadTask;
+    String simageUrl = await storageTaskSnapshot.ref.getDownloadURL();
+
+    // Create the store document in Firestore
+    await storesCollection.doc(sid).set({
+      'sid': sid,
+      'sname': sname,
+      'saddress': saddress,
+      'simageurl': simageUrl,
+      'latitude': latitude,
+      'longitude': longitude,
+      'products': [], // Initialize products list to empty
+    });
+    await updateStoreProduct(); // Update store products after store creation
+
+    print("Store created successfully");
+  } catch (e) {
+    print("Error creating store: $e");
   }
+}
+
 
   Future<void> updateStoreProduct() async {
     try {

@@ -4,6 +4,7 @@ import 'package:shopwiz/pages/cart/CartItem.dart';
 import 'package:shopwiz/pages/cart/cart_controller.dart';
 import 'package:shopwiz/services/firebase_service.dart';
 import 'package:shopwiz/pages/home/model/product.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final String productId;
@@ -142,53 +143,80 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       },
     );
   }
-
-  void _showAvailabilityList(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Store Availability'),
-          content: Container(
-            width: double.maxFinite,
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: FirebaseService().getAllStoresWithProductStock(widget.productId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else {
-                  List<Map<String, dynamic>>? stores = snapshot.data;
-                  if (stores != null && stores.isNotEmpty) {
-                    return ListView.builder(
-                      itemCount: stores.length,
-                      itemBuilder: (context, index) {
-                        return ProductCard(
-                          storeName: stores[index]['sname'] as String,
-                          storeId: stores[index]['sid'] as String? ?? '', // Handle null value
-                          stockQuantity: stores[index]['storestock'] as int,
-                          onTap: () {
-                            setState(() {
-                              _selectedStoreName = stores[index]['sname'] as String;
-                              _selectedStoreId = stores[index]['sid'] as String? ?? ''; // Handle null value
-                            });
-                            Navigator.of(context).pop();
-                          },
-                        );
-                      },
-                    );
-                  } else {
-                    return Text('No stores available');
-                  }
-                }
-              },
-            ),
-          ),
-        );
-      },
-    );
+void _openMap(double latitude, double longitude, String storeName) async {
+  final String googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=$storeName&query=$latitude,$longitude';
+  if (await canLaunch(googleMapsUrl)) {
+    await launch(googleMapsUrl);
+  } else {
+    throw 'Could not launch $googleMapsUrl';
   }
+}
+
+void _showAvailabilityList(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Store Availability'),
+        content: Container(
+          width: double.maxFinite,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: FirebaseService().getAllStoresWithProductStock(widget.productId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator(); // Show loading indicator while data is fetched
+              } else if (snapshot.hasError) {
+                 return Text(
+                      'Error: ${snapshot.error}'); // Show error message if there's an error
+              } else {
+                List<Map<String, dynamic>>? stores = snapshot.data;
+                if (stores != null && stores.isNotEmpty) {
+                  return ListView.builder(
+                    itemCount: stores.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(
+                          stores[index]['sname'] as String,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+     
+                        ),
+                        subtitle: Text(
+                          'Stock Quantity: ${stores[index]['storestock'] as int}',
+ 
+                        ),
+                        trailing: Tooltip(
+                          message: 'GPS',
+                          child: IconButton(
+                            icon: Icon(Icons.map),
+                            onPressed: () {
+                              double latitude = stores[index]['latitude'];
+                              double longitude = stores[index]['longitude'];
+                              String storeName = stores[index]['sname'];
+                              _openMap(latitude, longitude, storeName);
+                            },
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _selectedStoreName = stores[index]['sname'] as String;
+                            _selectedStoreId = stores[index]['sid'] as String? ?? ''; // Handle null value
+                          });
+                          Navigator.of(context).pop();
+                        },
+                      );
+                    },
+                  );
+                } else {
+                  return Center(child: Text('No stores available'));
+                }
+              }
+            },
+          ),
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {

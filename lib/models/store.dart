@@ -5,7 +5,9 @@ class Store {
   final String imagePath;
   final String storeName;
   final String storeAddress;
-  late final String status;
+    late final String status;
+  final double latitude;
+  final double longitude;
   final List<Product> products;
 
   Store({
@@ -13,6 +15,8 @@ class Store {
     required this.imagePath,
     required this.storeName,
     required this.storeAddress,
+    required this.latitude,
+    required this.longitude,
     required this.products,
   });
 
@@ -28,6 +32,8 @@ class Store {
       imagePath: map['simageurl'] ?? '',
       storeName: map['sname'] ?? '',
       storeAddress: map['saddress'] ?? '',
+      latitude: map['latitude'] ?? 0.0,
+      longitude: map['longitude'] ?? 0.0,
       products: products,
     );
   }
