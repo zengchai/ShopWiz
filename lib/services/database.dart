@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
+import 'package:shopwiz/models/product_model.dart';
 
 class DatabaseService {
   final String uid;
@@ -14,11 +15,11 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('users');
   final CollectionReference productsCollection =
       FirebaseFirestore.instance.collection('products');
-       final CollectionReference productCollection =
+  final CollectionReference productCollection =
       FirebaseFirestore.instance.collection('products');
   final CollectionReference storesCollection =
       FirebaseFirestore.instance.collection('stores');
-        final CollectionReference reviewCollection =
+  final CollectionReference reviewCollection =
       FirebaseFirestore.instance.collection('reviews');
 
   Future<void> setUserData(
@@ -42,6 +43,7 @@ class DatabaseService {
         return {
           'username': userData['username'],
           'email': userData['email'],
+          'order': userData['orders'],
           'phonenum': userData['phonenum'],
           'uid': userData['uid'],
           'imageUrl': await getProfileImageURL(uid),
@@ -383,6 +385,7 @@ class DatabaseService {
       return null;
     }
   }
+
   Future updateReviewData(String productID, String orderID, String userID,
       String review, double rating, String userName) async {
     try {
@@ -542,18 +545,26 @@ class DatabaseService {
     }
   }
 
-  Future<void> updateProductData(int transferQuantity, String productId) async {
-    final Map<String, dynamic> productData = await getProductData(productId);
-    final int updatedQuantity = productData['pquantity'] - transferQuantity;
-    // Update product quantity
-    editProduct(
-      productId,
-      productData['pname'],
-      productData['pprice'],
-      updatedQuantity,
-      productData['pdescription'],
-      productData['imageUrl'],
-    );
+  Stream<List<Product>> retrieveSearchProductList({String? productName}) {
+    try {
+      Stream<QuerySnapshot> stream;
+      
+      if (productName != null && productName.isNotEmpty) {
+        stream = FirebaseFirestore.instance
+            .collection('products')
+            .where('pname', isGreaterThanOrEqualTo: productName)
+            .where('pname', isLessThanOrEqualTo: productName + '\uf8ff')
+            .snapshots();
+      } else {
+        stream = FirebaseFirestore.instance.collection('products').snapshots();
+      }
+
+      return stream.map((querySnapshot) => querySnapshot.docs
+          .map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>))
+          .toList());
+    } catch (e) {
+      print("Error retrieving products: $e");
+      throw e;
+    }
   }
-  
 }

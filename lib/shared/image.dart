@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shopwiz/services/auth.dart';
 import 'package:shopwiz/services/database.dart';
+import 'package:shopwiz/services/reviewservice.dart';
 
 class ProductImageWidget extends StatefulWidget {
   final String productId;
@@ -27,7 +27,7 @@ class _ProductImageWidgetState extends State<ProductImageWidget> {
   Future<void> _loadImage() async {
     String uid = _auth.getCurrentUser().uid;
     String? url =
-        await DatabaseService(uid: uid).getProductImageURL(widget.productId);
+        await Reviewservice(uid: uid).getProductImageURL(widget.productId);
     setState(() {
       imageURL = url;
     });

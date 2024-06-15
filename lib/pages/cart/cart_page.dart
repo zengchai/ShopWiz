@@ -5,6 +5,7 @@ import 'package:shopwiz/pages/cart/CartItem.dart';
 import 'package:shopwiz/pages/cart/cart_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shopwiz/commons/BaseLayout.dart';
+import 'package:shopwiz/services/firebase_service.dart';
 
 class CartScreen extends StatefulWidget {
   @override
@@ -60,7 +61,6 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-
   void _updateQuantity(String pid, int quantity) {
     // Update the quantity in the database
     _cartController.updateCartItemQuantity(pid, quantity, _userId);
@@ -76,52 +76,51 @@ class _CartScreenState extends State<CartScreen> {
     print('Item added to cart');
   }
 
-void _placeOrder() async {
-  try {
-    // Calculate total selected subtotal
-    double totalSelectedSubtotal = _calculateTotalSelectedSubtotal(cartItems);
+  void _placeOrder(List<CartItem> selectedCartItems) async {
+    try {
+      // Calculate total selected subtotal
+      double totalSelectedSubtotal =
+          _calculateTotalSelectedSubtotal(selectedCartItems);
 
-    // Get the current user's UID
-    User? currentUser = _auth.currentUser;
-    if (currentUser == null) {
-      throw Exception("User not authenticated");
+      // Get the current user's UID
+      User? currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        throw Exception("User not authenticated");
+      }
+      String userId = currentUser.uid;
+
+      // Call placeOrder function from CartController to place the order
+      await _cartController.placeOrder(
+          selectedCartItems, totalSelectedSubtotal, userId);
+
+      // Delete the selected items from the cart
+      for (String pid in _selectedItems) {
+        await _cartController.deleteCartItem(pid, userId);
+      }
+
+      // Clear the selected items list after placing the order
+      setState(() {
+        _selectedItems.clear();
+      });
+
+      // Show a success message or navigate to a confirmation screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Order placed successfully!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (error) {
+      // Handle error
+      print("Error placing order: $error");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to place order. Please try again later.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
-    String userId = currentUser.uid;
-
-    // Call placeOrder function from CartController to place the order
-    await _cartController.placeOrder(cartItems, totalSelectedSubtotal, userId);
-
-    // Delete the selected items from the cart
-    List<String> selectedPids = _selectedItems.toList();
-    for (String pid in selectedPids) {
-      await _cartController.deleteCartItem(pid, userId);
-    }
-
-    // Clear the selected items list after placing the order
-    setState(() {
-      _selectedItems.clear();
-    });
-
-    // Show a success message or navigate to a confirmation screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Order placed successfully!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  } catch (error) {
-    // Handle error
-    print("Error placing order: $error");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to place order. Please try again later.'),
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
-}
-
-
 
   void _subtractQuantity(String pid) async {
     // Get the current quantity of the cart item
@@ -149,142 +148,222 @@ void _placeOrder() async {
     // Update the quantity in the database
     _cartController.updateCartItemQuantity(pid, newQuantity, _userId);
   }
-void _toggleSelection(String pid) {
-  setState(() {
-    if (_selectedItems.contains(pid)) {
-      _selectedItems.remove(pid);
-    } else {
-      _selectedItems.add(pid);
-    }
-  });
-}
 
-double _calculateTotalSelectedSubtotal(List<CartItem> cartItems) {
-  double total = 0;
-  for (var item in cartItems) {
-    if (_selectedItems.contains(item.pid)) {
-      total += item.price * item.quantity;
-    }
+  void _toggleSelection(String pid) {
+    setState(() {
+      if (_selectedItems.contains(pid)) {
+        _selectedItems.remove(pid);
+      } else {
+        _selectedItems.add(pid);
+      }
+    });
   }
-  return total;
-}
 
-
-@override
-Widget build(BuildContext context) {
-  return BaseLayout(
-    child: Scaffold(
-      appBar: AppBar(
-        title: Text('Cart'),
-      ),
-      body: StreamBuilder<List<CartItem>>(
-        stream: _cartItemsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text('No items in the cart'),
-            );
-          }
-
-          List<CartItem> cartItems = snapshot.data!;
-          double totalSelectedSubtotal = _calculateTotalSelectedSubtotal(cartItems);
-
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: 20), // Add some spacing
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: cartItems.length,
-                  itemBuilder: (context, index) {
-                    CartItem cartItem = cartItems[index];
-                    double subtotal = cartItem.price * cartItem.quantity; // Calculate subtotal for each item
-                    // Add subtotal to total
-
-                    bool isSelected = _selectedItems.contains(cartItem.pid);
-
-                    return Card(
-                      child: ListTile(
-                        leading: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Checkbox(
-                            value: isSelected,
-                            onChanged: (value) {
-                              _toggleSelection(cartItem.pid);
-                            },
-                          ),
-                        ),
-                        title: Row(
-                          children: [
-                            SizedBox(width: 10),
-                            SizedBox(
-                              width: 60, // Set a fixed width for the image
-                              height: 60, // Set a fixed height for the image
-                              child: Image.network(cartItem.image), // Display image for each item
-                            ),
-                            SizedBox(width: 10),
-                            Text(cartItem.name),
-                          ],
-                        ),
-                        subtitle: Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.remove),
-                              onPressed: () async {
-                                _subtractQuantity(cartItem.pid);
-                              },
-                            ),
-                            Text('${cartItem.quantity}'),
-                            IconButton(
-                              icon: Icon(Icons.add),
-                              onPressed: () async {
-                                _addQuantity(cartItem.pid);
-                              },
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                _deleteItem(cartItem.pid);
-                              },
-                              child: Text('Delete'),
-                            ),
-                            Spacer(),
-                            Text('RM ${subtotal.toStringAsFixed(2)}'), // Display subtotal for each item
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: 20), // Add some spacing
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    onPressed: _placeOrder,
-                    child: Text('Place Order'),
-                  ),
-                ),
-                SizedBox(height: 10), // Add some spacing
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    'Total Price: RM ${totalSelectedSubtotal.toStringAsFixed(2)}', // Display total subtotal for selected items
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    ),
+void _showAvailabilityList(BuildContext context, CartItem cartItem) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Store Availability'),
+        content: Container(
+          width: double.maxFinite,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: FirebaseService().getAllStoresWithProductStock(cartItem.pid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator(); // Show loading indicator while data is fetched
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}'); // Show error message if there's an error
+              } else {
+                List<Map<String, dynamic>>? stores = snapshot.data;
+                if (stores != null && stores.isNotEmpty) {
+                  return ListView.builder(
+                    itemCount: stores.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(stores[index]['sname'] as String),
+                        onTap: () async {
+                          String selectedStore = stores[index]['sname'] as String;
+                          setState(() {
+                            // Update the store name of the cart item
+                            cartItem.store = selectedStore;
+                          });
+                          // Update the store in the database
+                          await _cartController.updateCartItemStore(cartItem.pid, selectedStore, _userId);
+                          Navigator.of(context).pop();
+                        },
+                      );
+                    },
+                  );
+                } else {
+                  return Text('No stores available'); // Show message if no stores are available
+                }
+              }
+            },
+          ),
+        ),
+      );
+    },
   );
 }
 
+
+  double _calculateTotalSelectedSubtotal(List<CartItem> cartItems) {
+    double total = 0;
+    for (var item in cartItems) {
+      if (_selectedItems.contains(item.pid)) {
+        total += item.price * item.quantity;
+      }
+    }
+    return total;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseLayout(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Cart'),
+        ),
+        body: StreamBuilder<List<CartItem>>(
+          stream: _cartItemsStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Text('No items in the cart'),
+              );
+            }
+
+            List<CartItem> cartItems = snapshot.data!;
+            double totalSelectedSubtotal =
+                _calculateTotalSelectedSubtotal(cartItems);
+
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: 20), // Add some spacing
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: cartItems.length,
+                    itemBuilder: (context, index) {
+                      CartItem cartItem = cartItems[index];
+                      double subtotal = cartItem.price *
+                          cartItem.quantity; // Calculate subtotal for each item
+                      // Add subtotal to total
+
+                      bool isSelected = _selectedItems.contains(cartItem.pid);
+
+                      return Card(
+                        child: ListTile(
+                          leading: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: isSelected,
+                              onChanged: (value) {
+                                _toggleSelection(cartItem.pid);
+                              },
+                            ),
+                          ),
+                          title: Row(
+                            children: [
+                              SizedBox(width: 10),
+                              SizedBox(
+                                width: 60, // Set a fixed width for the image
+                                height: 60, // Set a fixed height for the image
+                                child: Image.network(cartItem
+                                    .image), // Display image for each item
+                              ),
+                              SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(cartItem.name),
+                                  InkWell(
+                                    onTap: () {
+                                      _showAvailabilityList(context, cartItem);
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 4.0),
+                                      child: Text(
+                                        cartItem.store ??
+                                            'Select a location', // Display the selected store name
+                                        style: TextStyle(
+                                          color: Colors.blue,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          subtitle: Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.remove),
+                                onPressed: () async {
+                                  _subtractQuantity(cartItem.pid);
+                                },
+                              ),
+                              Text('${cartItem.quantity}'),
+                              IconButton(
+                                icon: Icon(Icons.add),
+                                onPressed: () async {
+                                  _addQuantity(cartItem.pid);
+                                },
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  _deleteItem(cartItem.pid);
+                                },
+                                child: Text('Delete'),
+                              ),
+                              Spacer(),
+                              Text(
+                                  'RM ${subtotal.toStringAsFixed(2)}'), // Display subtotal for each item
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 20), // Add some spacing
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        List<CartItem> selectedCartItems = cartItems
+                            .where((item) => _selectedItems.contains(item.pid))
+                            .toList();
+                        _placeOrder(selectedCartItems);
+                      },
+                      child: Text('Place Order'),
+                    ),
+                  ),
+                  SizedBox(height: 10), // Add some spacing
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      'Total Price: RM ${totalSelectedSubtotal.toStringAsFixed(2)}', // Display total subtotal for selected items
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
