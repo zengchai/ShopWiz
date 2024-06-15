@@ -332,14 +332,14 @@ class Reviewservice {
 
       if (productSnapshot.exists) {
         List<dynamic> reviewIds = productSnapshot['review'];
-
+        print(reviewIds);
         // Fetch the reviews based on the reviewIds
         List<Review> reviews = [];
         for (String reviewId in reviewIds) {
           DocumentSnapshot reviewSnapshot =
               await reviewCollection.doc(reviewId).get();
           if (reviewSnapshot.exists) {
-            reviews.add(reviewSnapshot.data() as Review);
+            reviews.add(Review.fromFirestore(reviewSnapshot));
           }
         }
 

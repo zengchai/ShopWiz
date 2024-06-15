@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shopwiz/commons/BaseLayout.dart';
+import 'package:shopwiz/models/review.dart';
 import 'package:shopwiz/pages/cart/CartItem.dart';
 import 'package:shopwiz/pages/cart/cart_controller.dart';
 import 'package:shopwiz/services/firebase_service.dart';
 import 'package:shopwiz/pages/home/model/product.dart';
+import 'package:shopwiz/services/reviewservice.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
@@ -23,12 +25,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   bool _isLoading = false; // To manage loading state
   List<Map<String, dynamic>> _stores = []; // List to store the store data
   String _selectedStoreName = 'Select a location'; // Default selection
-  String _selectedStoreId = ''; // Define _selectedStoreId variable to hold the selected store ID
+  String _selectedStoreId =
+      ''; // Define _selectedStoreId variable to hold the selected store ID
 
+  List<Review> _reviews = []; // List to store the reviews
   @override
   void initState() {
     super.initState();
     _fetchProductInfo();
+    _fetchReviews();
+  }
+
+  void _fetchReviews() async {
+    try {
+      List<Review> reviews = await Reviewservice(uid: widget.userId)
+          .getReviewsByProductId(widget.productId);
+      setState(() {
+        _reviews = reviews;
+      });
+    } catch (error) {
+      print('Error fetching reviews: $error');
+    }
   }
 
   void _fetchProductInfo() async {
@@ -56,7 +73,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   void _fetchStoreDataForProduct(String productId) async {
     try {
-      List<Map<String, dynamic>> stores = await FirebaseService().getAllStoresWithProductStock(productId);
+      List<Map<String, dynamic>> stores =
+          await FirebaseService().getAllStoresWithProductStock(productId);
       setState(() {
         _stores = stores;
       });
@@ -79,7 +97,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
   }
 
-  void _addToCart(String storeId) async { // Change parameter to storeId
+  void _addToCart(String storeId) async {
+    // Change parameter to storeId
     if (_quantity <= 0) {
       _showDialog('Error', 'Quantity must be greater than 0.');
       return;
@@ -143,80 +162,84 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       },
     );
   }
-void _openMap(double latitude, double longitude, String storeName) async {
-  final String googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=$storeName&query=$latitude,$longitude';
-  if (await canLaunch(googleMapsUrl)) {
-    await launch(googleMapsUrl);
-  } else {
-    throw 'Could not launch $googleMapsUrl';
-  }
-}
 
-void _showAvailabilityList(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Store Availability'),
-        content: Container(
-          width: double.maxFinite,
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: FirebaseService().getAllStoresWithProductStock(widget.productId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator(); // Show loading indicator while data is fetched
-              } else if (snapshot.hasError) {
-                 return Text(
+  void _openMap(double latitude, double longitude, String storeName) async {
+    final String googleMapsUrl =
+        'https://www.google.com/maps/search/?api=1&query=$storeName&query=$latitude,$longitude';
+    if (await canLaunch(googleMapsUrl)) {
+      await launch(googleMapsUrl);
+    } else {
+      throw 'Could not launch $googleMapsUrl';
+    }
+  }
+
+  void _showAvailabilityList(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Store Availability'),
+          content: Container(
+            width: double.maxFinite,
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: FirebaseService()
+                  .getAllStoresWithProductStock(widget.productId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator(); // Show loading indicator while data is fetched
+                } else if (snapshot.hasError) {
+                  return Text(
                       'Error: ${snapshot.error}'); // Show error message if there's an error
-              } else {
-                List<Map<String, dynamic>>? stores = snapshot.data;
-                if (stores != null && stores.isNotEmpty) {
-                  return ListView.builder(
-                    itemCount: stores.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(
-                          stores[index]['sname'] as String,
-                          style: TextStyle(fontWeight: FontWeight.bold),
-     
-                        ),
-                        subtitle: Text(
-                          'Stock Quantity: ${stores[index]['storestock'] as int}',
- 
-                        ),
-                        trailing: Tooltip(
-                          message: 'GPS',
-                          child: IconButton(
-                            icon: Icon(Icons.map),
-                            onPressed: () {
-                              double latitude = stores[index]['latitude'];
-                              double longitude = stores[index]['longitude'];
-                              String storeName = stores[index]['sname'];
-                              _openMap(latitude, longitude, storeName);
-                            },
-                          ),
-                        ),
-                        onTap: () {
-                          setState(() {
-                            _selectedStoreName = stores[index]['sname'] as String;
-                            _selectedStoreId = stores[index]['sid'] as String? ?? ''; // Handle null value
-                          });
-                          Navigator.of(context).pop();
-                        },
-                      );
-                    },
-                  );
                 } else {
-                  return Center(child: Text('No stores available'));
+                  List<Map<String, dynamic>>? stores = snapshot.data;
+                  if (stores != null && stores.isNotEmpty) {
+                    return ListView.builder(
+                      itemCount: stores.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(
+                            stores[index]['sname'] as String,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            'Stock Quantity: ${stores[index]['storestock'] as int}',
+                          ),
+                          trailing: Tooltip(
+                            message: 'GPS',
+                            child: IconButton(
+                              icon: Icon(Icons.map),
+                              onPressed: () {
+                                double latitude = stores[index]['latitude'];
+                                double longitude = stores[index]['longitude'];
+                                String storeName = stores[index]['sname'];
+                                _openMap(latitude, longitude, storeName);
+                              },
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _selectedStoreName =
+                                  stores[index]['sname'] as String;
+                              _selectedStoreId =
+                                  stores[index]['sid'] as String? ??
+                                      ''; // Handle null value
+                            });
+                            Navigator.of(context).pop();
+                          },
+                        );
+                      },
+                    );
+                  } else {
+                    return Center(child: Text('No stores available'));
+                  }
                 }
-              }
-            },
+              },
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,20 +269,23 @@ void _showAvailabilityList(BuildContext context) {
                               fit: BoxFit.cover,
                               onError: (error, stackTrace) {
                                 setState(() {
-                                  _product!.pimageUrl = ''; // Set the image URL to empty string to trigger the fallback UI
+                                  _product!.pimageUrl =
+                                      ''; // Set the image URL to empty string to trigger the fallback UI
                                 });
                               },
                             ),
                           ),
                           child: _product!.pimageUrl.isEmpty
-                              ? Icon(Icons.broken_image, size: 100, color: Colors.grey)
+                              ? Icon(Icons.broken_image,
+                                  size: 100, color: Colors.grey)
                               : null,
                         )
                       : Container(
                           width: MediaQuery.of(context).size.width,
                           height: 300,
                           color: Colors.grey[300],
-                          child: Icon(Icons.broken_image, size: 100, color: Colors.grey),
+                          child: Icon(Icons.broken_image,
+                              size: 100, color: Colors.grey),
                         ),
                   SizedBox(height: 16.0),
                   Padding(
@@ -269,7 +295,8 @@ void _showAvailabilityList(BuildContext context) {
                       children: [
                         Text(
                           _product?.pname ?? 'Loading...',
-                          style: TextStyle(fontSize: 24.0, color: Colors.black87),
+                          style:
+                              TextStyle(fontSize: 24.0, color: Colors.black87),
                           overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 8.0),
@@ -279,19 +306,24 @@ void _showAvailabilityList(BuildContext context) {
                               _product != null
                                   ? 'RM ${_product!.pprice.toStringAsFixed(2)}'
                                   : 'Loading...',
-                              style: TextStyle(fontSize: 16.0, color: Colors.green),
+                              style: TextStyle(
+                                  fontSize: 16.0, color: Colors.green),
                             ),
                             SizedBox(width: 16.0),
                             Text(
-                              _product != null ? 'Quantity: ${_product!.pquantity}' : 'Loading...',
-                              style: TextStyle(fontSize: 16.0, color: Colors.black87),
+                              _product != null
+                                  ? 'Quantity: ${_product!.pquantity}'
+                                  : 'Loading...',
+                              style: TextStyle(
+                                  fontSize: 16.0, color: Colors.black87),
                             ),
                           ],
                         ),
                         SizedBox(height: 8.0),
                         Text(
                           _product?.pdescription ?? 'Loading...',
-                          style: TextStyle(fontSize: 16.0, color: Colors.black87),
+                          style:
+                              TextStyle(fontSize: 16.0, color: Colors.black87),
                         ),
                         SizedBox(height: 16.0),
                         Text(
@@ -336,7 +368,8 @@ void _showAvailabilityList(BuildContext context) {
                               ),
                               child: Text(
                                 '$_quantity',
-                                style: TextStyle(fontSize: 16.0, color: Colors.black),
+                                style: TextStyle(
+                                    fontSize: 16.0, color: Colors.black),
                               ),
                             ),
                             IconButton(
@@ -346,7 +379,8 @@ void _showAvailabilityList(BuildContext context) {
                             SizedBox(width: 16.0),
                             ElevatedButton(
                               onPressed: () {
-                                _addToCart(_selectedStoreId); // Pass the store ID
+                                _addToCart(
+                                    _selectedStoreId); // Pass the store ID
                               },
                               child: Text(
                                 'Add to Cart',
@@ -355,6 +389,34 @@ void _showAvailabilityList(BuildContext context) {
                             ),
                           ],
                         ),
+                        Text(
+                          'Customer Reviews:',
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 8.0),
+                        _reviews.isEmpty
+                            ? Text('No reviews yet.')
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemCount: _reviews.length,
+                                itemBuilder: (context, index) {
+                                  final review = _reviews[index];
+                                  return ListTile(
+                                    title: Text(review.userName),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(review.review),
+                                        SizedBox(height: 4.0),
+                                        Text('Rating: ${review.rating}'),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                       ],
                     ),
                   ),
