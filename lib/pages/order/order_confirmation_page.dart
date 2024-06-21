@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shopwiz/models/order.dart';
+import 'package:shopwiz/pages/order/order_page.dart';
 import 'package:shopwiz/services/auth.dart';
 import 'package:shopwiz/services/reviewservice.dart';
 import 'package:shopwiz/shared/order_item.dart';
@@ -27,8 +28,17 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
 
     final uid = _auth.getCurrentUser().uid;
     final orderService = Reviewservice(uid: uid);
+
+    // Update order status in Firestore
     await orderService.updateReviewStatus(orderId, storeId);
-    setState(() {});
+
+    // Navigate to order_page and refresh
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderScreen(),
+      ),
+    );
   }
 
   @override

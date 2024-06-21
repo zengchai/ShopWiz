@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shopwiz/models/order.dart';
 import 'package:shopwiz/shared/order_item.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
@@ -16,6 +18,35 @@ class OrderDetailScreen extends StatefulWidget {
 
   @override
   State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+void _openMap(String sid) async {
+  try {
+    // Retrieve store details from Firestore based on sid
+    DocumentSnapshot storeSnapshot =
+        await FirebaseFirestore.instance.collection('stores').doc(sid).get();
+
+    // Check if store data exists
+    if (storeSnapshot.exists) {
+      double latitude = storeSnapshot['latitude'];
+      double longitude = storeSnapshot['longitude'];
+      String storeName = storeSnapshot['sname'];
+
+      // Open Google Maps with the retrieved coordinates
+      final String googleMapsUrl =
+          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude($storeName)';
+      if (await canLaunch(googleMapsUrl)) {
+        await launch(googleMapsUrl);
+      } else {
+        throw 'Could not launch $googleMapsUrl';
+      }
+    } else {
+      throw 'Store with ID $sid not found';
+    }
+  } catch (e) {
+    print('Error opening map: $e');
+    // Handle error opening Google Maps
+  }
 }
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
@@ -121,13 +152,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(store.storeId),
-                                ElevatedButton(
-                                  onPressed: null,
-                                  child: Icon(
-                                    Icons.arrow_right_rounded,
-                                    color: Colors.black,
-                                  ),
-                                )
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    String sid = store
+                                        .storeId; // Assuming stores[index] contains a document snapshot with an ID
+                                    _openMap(sid);
+                                  },
+                                  icon: Icon(Icons.map),
+                                  label: Text("Open Map"),
+                                ),
                               ],
                             ),
                             ListView.builder(

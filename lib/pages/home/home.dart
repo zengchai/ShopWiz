@@ -1,12 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:shopwiz/commons/BaseLayout.dart';
 import 'package:shopwiz/commons/BaselayoutAdmin.dart';
 import 'package:shopwiz/pages/home/model/product.dart';
 import 'package:shopwiz/pages/home/productdetails.dart';
-import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:shopwiz/services/firebase_service.dart';
 import 'package:shopwiz/services/reviewservice.dart'; // Import the FirebaseService
 
@@ -31,19 +30,23 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     monthlyOrders = await Reviewservice(uid: currentUid).getMonthlyOrders(year);
     print(monthlyOrders);
-    setState(() {
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchTodaysOrders() async {
     try {
       Map<String, dynamic> result =
           await Reviewservice(uid: currentUid).getTodaysOrders();
-      setState(() {
-        todaysOrders = result['totalOrders'];
-        todaysTotalPrice = result['totalPrice'];
-      });
+      if (mounted) {
+        setState(() {
+          todaysOrders = result['totalOrders'];
+          todaysTotalPrice = result['totalPrice'];
+        });
+      }
     } catch (e) {
       print("Error fetching today's orders: $e");
     }
