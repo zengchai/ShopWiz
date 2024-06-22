@@ -31,6 +31,27 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
     setState(() {});
   }
 
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Order Complete'),
+          content: Text('The order status has been updated to "Received".'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                setState(() {}); // Refresh the screen
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,6 +163,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                                         setState(() {
                                           store.update("Received");
                                         });
+                                        _showCompletionDialog();
                                       }
                                     }
                                   },
