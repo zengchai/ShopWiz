@@ -11,17 +11,23 @@ class FirebaseService {
     try {
       QuerySnapshot querySnapshot =
           await _firestore.collection('products').get();
-      querySnapshot.docs.forEach((doc) {
-        products.add(Product(
-          pid: doc['pid'],
-          pname: doc['pname'],
-          pcategory: doc['pcategory'],
-          pdescription: doc['pdescription'],
-          pimageUrl: doc['pimageUrl'],
-          pprice: doc['pprice'].toDouble(),
-          pquantity: doc['pquantity'],
-        ));
-      });
+      // Loop through batches if there are more than 1,000 products
+      while (querySnapshot.docs.isNotEmpty) {
+        querySnapshot.docs.forEach((doc) {
+          products.add(Product(
+            pid: doc['pid'],
+            pname: doc['pname'],
+            pdescription: doc['pdescription'],
+            pimageUrl: doc['pimageUrl'],
+            pprice: doc['pprice'].toDouble(),
+            pquantity: doc['pquantity'],
+          ));
+        });
+        // Fetch next batch if available
+        querySnapshot = await _firestore
+            .collection('products')
+            .startAfter([querySnapshot.docs.last]).get();
+      }
     } catch (e) {
       print('Error fetching products: $e');
     }
@@ -37,7 +43,6 @@ class FirebaseService {
         return Product(
           pid: docSnapshot['pid'],
           pname: docSnapshot['pname'],
-          pcategory: docSnapshot['pcategory'],
           pdescription: docSnapshot['pdescription'],
           pimageUrl: docSnapshot['pimageUrl'],
           pprice: docSnapshot['pprice'].toDouble(),

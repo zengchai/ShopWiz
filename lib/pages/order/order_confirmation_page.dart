@@ -32,6 +32,12 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
     // Update order status in Firestore
     await orderService.updateReviewStatus(orderId, storeId);
 
+    // Update local state
+    setState(() {
+      widget.store.firstWhere((store) => store.storeId == storeId).status =
+          "Received";
+    });
+
     // Navigate to order_page and refresh
     Navigator.pushReplacement(
       context,
@@ -145,14 +151,13 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                                 Text(store.storeId),
                                 ElevatedButton(
                                   onPressed: () {
-                                    if (widget.status == "Pick Up") {
-                                      if (store.status != "Received") {
-                                        _updateOrderStatus(
-                                            widget.orderId, store.storeId);
-                                        setState(() {
-                                          store.update("Received");
-                                        });
-                                      }
+                                    if (widget.status == "Pick Up" &&
+                                        store.status != "Received") {
+                                      _updateOrderStatus(
+                                          widget.orderId, store.storeId);
+                                      setState(() {
+                                        store.update("Received");
+                                      });
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -160,16 +165,15 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                                       vertical: 2,
                                       horizontal: 15,
                                     ),
-                                    backgroundColor:
-                                        widget.status == "Received" &&
-                                                store.status != null
-                                            ? Colors.grey[300]
-                                            : Color.fromARGB(
-                                                255,
-                                                108,
-                                                74,
-                                                255,
-                                              ),
+                                    backgroundColor: (widget.status ==
+                                                    "Received" &&
+                                                store.status != null) ||
+                                            (widget.status == "Pick Up" &&
+                                                store.status == "Received")
+                                        ? Colors.grey[
+                                            300] // Set to grey when condition met
+                                        : Color.fromARGB(255, 108, 74,
+                                            255), // Original color
                                   ),
                                   child: Text(
                                     'Complete',
