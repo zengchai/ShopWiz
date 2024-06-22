@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shopwiz/models/user_model.dart';
+
 import 'package:shopwiz/pages/cart/CartItem.dart';
 
 import 'package:firebase_auth/firebase_auth.dart' as FirebaseAuth;
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shopwiz/models/user_model.dart';
+
+
+import 'package:shopwiz/services/firebase_service.dart';
 
 class CartController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -112,57 +112,84 @@ class CartController {
       throw error;
     }
   }
+Future<void> placeOrder(List<CartItem> cartItems, double totalSelectedSubtotal, String userId) async {
+  try {
+    // Generate a new order ID
+    String orderId = _firestore.collection('orders').doc().id;
 
-  Future<void> placeOrder(List<CartItem> cartItems,
-      double totalSelectedSubtotal, String userId) async {
-    try {
-      // Generate a new order ID
-      String orderId = _firestore.collection('orders').doc().id;
-
-      // Prepare the order data
-      Map<String, dynamic> orderData = {
-        'orderId': orderId,
-        'userId': userId,
-        'status': 'Pick Up',
-        'totalPrice': totalSelectedSubtotal,
-        'totalQuantity': cartItems.fold(0, (sum, item) => sum + item.quantity),
-        'store': cartItems
-            .map((item) => {
-                  'storeId': item.storeId,
-                  'items': [
-                    {
-                      'productId': item.pid,
-                      'productName': item.name,
-                      'quantity': item.quantity,
-                      'price': item.price,
-                    }
-                  ],
-                })
-            .toList(),
-        'date': FieldValue.serverTimestamp(),
-      };
-
-      DocumentReference userDocRef = _firestore.collection('users').doc(userId);
-
-      // Update the user's orders field
-      await userDocRef.update({
-        'orders': FieldValue.arrayUnion([orderId])
-      });
-      // Save the order data to Firestore
-      await _firestore.collection('orders').doc(orderId).set(orderData);
-    } catch (error) {
-      print("Error placing order: $error");
-      throw error;
+    // Group items by store
+    Map<String, List<Map<String, dynamic>>> storeItems = {};
+    for (var item in cartItems) {
+      if (storeItems.containsKey(item.storeId)) {
+        storeItems[item.storeId]!.add({
+          'productId': item.pid,
+          'productName': item.name,
+          'quantity': item.quantity,
+          'price': item.price,
+        });
+      } else {
+        storeItems[item.storeId] = [
+          {
+            'productId': item.pid,
+            'productName': item.name,
+            'quantity': item.quantity,
+            'price': item.price,
+          }
+        ];
+      }
     }
+
+    // Prepare the order data
+    Map<String, dynamic> orderData = {
+      'orderId': orderId,
+      'userId': userId,
+      'status': 'Pick Up',
+      'totalPrice': totalSelectedSubtotal,
+      'totalQuantity': cartItems.fold(0, (sum, item) => sum + item.quantity),
+      'store': storeItems.entries.map((entry) => {
+            'storeId': entry.key,
+            'items': entry.value,
+          }).toList(),
+      'date': FieldValue.serverTimestamp(),
+    };
+
+    DocumentReference userDocRef = _firestore.collection('users').doc(userId);
+
+    // Update the user's orders field
+    await userDocRef.update({
+      'orders': FieldValue.arrayUnion([orderId])
+    });
+
+    // Save the order data to Firestore
+    await _firestore.collection('orders').doc(orderId).set(orderData);
+
+    // Deduct store stock for each selected item
+    for (CartItem item in cartItems) {
+      try {
+        await FirebaseService().deductStoreStock(item.pid, item.storeId, item.quantity);
+      } catch (error) {
+        print('Error deducting store stock for ${item.pid} at ${item.storeId}: $error');
+        // Handle error appropriately
+        // Optionally: Notify user or handle retry logic
+      }
+    }
+
+  } catch (error) {
+    print("Error placing order: $error");
+    throw error;
   }
+}
 
   Future<void> updateCartItemStore(
-      String pid, String store, String userId) async {
+      String pid, String store,String storeId, String userId) async {
     try {
       // Get a reference to the user's document
       DocumentReference userDocRef = _firestore.collection('users').doc(userId);
 
       // Update the store of the cart item
+      await userDocRef.collection('cart').doc(pid).update({
+        'storeId': storeId,
+      });
       await userDocRef.collection('cart').doc(pid).update({
         'store': store,
       });

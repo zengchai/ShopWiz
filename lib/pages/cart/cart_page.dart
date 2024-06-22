@@ -110,18 +110,18 @@ class _CartScreenState extends State<CartScreen> {
         await _cartController.deleteCartItem(pid, userId);
       }
 
-      // Deduct storestock for each selected item
-      for (CartItem item in selectedCartItems) {
-        try {
-          await FirebaseService()
-              .deductStoreStock(item.pid, item.storeId, item.quantity);
-        } catch (error) {
-          print(
-              'Error deducting store stock for ${item.pid} at ${item.storeId}: $error');
-          // Handle error appropriately
-          // Optionally: Notify user or handle retry logic
-        }
-      }
+      // // Deduct storestock for each selected item
+      // for (CartItem item in selectedCartItems) {
+      //   try {
+      //     await FirebaseService()
+      //         .deductStoreStock(item.pid, item.storeId, item.quantity);
+      //   } catch (error) {
+      //     print(
+      //         'Error deducting store stock for ${item.pid} at ${item.storeId}: $error');
+      //     // Handle error appropriately
+      //     // Optionally: Notify user or handle retry logic
+      //   }
+      // }
 
       // Clear the selected items list after placing the order
       setState(() {
@@ -243,13 +243,14 @@ class _CartScreenState extends State<CartScreen> {
                           onTap: () async {
                             String selectedStore =
                                 stores[index]['sname'] as String;
+                            String sid = stores[index]['sid'] as String;
                             setState(() {
                               // Update the store name of the cart item
                               cartItem.store = selectedStore;
                             });
                             // Update the store in the database
                             await _cartController.updateCartItemStore(
-                                cartItem.pid, selectedStore, _userId);
+                                cartItem.pid, selectedStore, sid, _userId);
                             Navigator.of(context).pop();
                           },
                         );
