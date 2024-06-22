@@ -32,6 +32,9 @@ class Reviewservice {
         // Find the specific store by its storeId
         for (var store in stores) {
           if (store['storeId'] == storeId) {
+            if (store['status'] == null) {
+              return false;
+            }
             List<dynamic> items = store['items'] ?? [];
 
             // Find the specific item by its productId
@@ -43,6 +46,25 @@ class Reviewservice {
             }
           }
         }
+      }
+      return false; // Default to false if the order, store, or item is not found
+    } catch (e) {
+      print('Error checking review: $e');
+      return false;
+    }
+  }
+
+  Future<bool> checkStatus(String orderId) async {
+    try {
+      DocumentSnapshot snapshot = await orderCollection.doc(orderId).get();
+      Map<String, dynamic>? orderData =
+          snapshot.data() as Map<String, dynamic>?;
+      print(orderData?['status']);
+      if (orderData != null) {
+        if (orderData['status'] == "Received") {
+          return true;
+        }
+        return false;
       }
       return false; // Default to false if the order, store, or item is not found
     } catch (e) {

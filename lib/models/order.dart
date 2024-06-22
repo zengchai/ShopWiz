@@ -28,6 +28,10 @@ class Store {
   void update(String newStatus) {
     this.status = newStatus;
   }
+
+  void getUpdate() {
+    print(status);
+  }
 }
 
 class Item {

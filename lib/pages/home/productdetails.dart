@@ -3,8 +3,8 @@ import 'package:shopwiz/commons/BaseLayout.dart';
 import 'package:shopwiz/models/review.dart';
 import 'package:shopwiz/pages/cart/CartItem.dart';
 import 'package:shopwiz/pages/cart/cart_controller.dart';
-import 'package:shopwiz/services/firebase_service.dart';
 import 'package:shopwiz/pages/home/model/product.dart';
+import 'package:shopwiz/services/firebase_service.dart';
 import 'package:shopwiz/services/reviewservice.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -97,58 +97,58 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
   }
 
-void _addToCart(String storeId) async {
-  // Check if no pickup location is selected
-  if (_selectedStoreName == 'Select a location') {
-    _showDialog('Error', 'Please select a pickup location before adding to cart.');
-    return;
-  }
-
-  // Validate quantity
-  if (_quantity <= 0) {
-    _showDialog('Error', 'Quantity must be greater than 0.');
-    return;
-  }
-
-  try {
-    if (_product != null) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final cartItem = CartItem(
-        pid: _product!.pid,
-        name: _product!.pname,
-        image: _product!.pimageUrl,
-        quantity: _quantity,
-        price: _product!.pprice,
-        store: _selectedStoreName,
-        storeId: storeId, // Pass selected store ID
-      );
-
-      await _cartController.addToCart(cartItem);
+  void _addToCart(String storeId) async {
+    // Check if no pickup location is selected
+    if (_selectedStoreName == 'Select a location') {
       _showDialog(
-        'Success',
-        '$_quantity ${_product!.pname} added to cart successfully from $_selectedStoreName!',
-      );
-    } else {
-      _showDialog('Error', 'Failed to fetch product information.');
+          'Error', 'Please select a pickup location before adding to cart.');
+      return;
     }
-  } catch (error) {
-    print("Error adding to cart: $error");
-    _showDialog(
-      'Error',
-      'Failed to add product to cart. Please try again later.',
-    );
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+
+    // Validate quantity
+    if (_quantity <= 0) {
+      _showDialog('Error', 'Quantity must be greater than 0.');
+      return;
+    }
+
+    try {
+      if (_product != null) {
+        setState(() {
+          _isLoading = true;
+        });
+
+        final cartItem = CartItem(
+          pid: _product!.pid,
+          name: _product!.pname,
+          image: _product!.pimageUrl,
+          quantity: _quantity,
+          price: _product!.pprice,
+          store: _selectedStoreName,
+          storeId: storeId, // Pass selected store ID
+        );
+
+        await _cartController.addToCart(cartItem);
+        _showDialog(
+          'Success',
+          '$_quantity ${_product!.pname} added to cart successfully from $_selectedStoreName!',
+        );
+      } else {
+        _showDialog('Error', 'Failed to fetch product information.');
+      }
+    } catch (error) {
+      print("Error adding to cart: $error");
+      _showDialog(
+        'Error',
+        'Failed to add product to cart. Please try again later.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
-
 
   void _showDialog(String title, String content) {
     showDialog(
@@ -204,12 +204,15 @@ void _addToCart(String storeId) async {
                       itemCount: stores.length,
                       itemBuilder: (context, index) {
                         return ListTile(
-                          title: Text(
-                            stores[index]['sname'] as String,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            'Stock Quantity: ${stores[index]['storestock'] as int}',
+                          title: Text(stores[index]['sname'] as String),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(stores[index]['saddress'] as String),
+                              Text(
+                                'Stock Quantity: ${stores[index]['storestock'] as int}',
+                              ),
+                            ],
                           ),
                           trailing: Tooltip(
                             message: 'GPS',
@@ -317,13 +320,13 @@ void _addToCart(String storeId) async {
                                   fontSize: 16.0, color: Colors.green),
                             ),
                             SizedBox(width: 16.0),
-                            Text(
-                              _product != null
-                                  ? 'Quantity: ${_product!.pquantity}'
-                                  : 'Loading...',
-                              style: TextStyle(
-                                  fontSize: 16.0, color: Colors.black87),
-                            ),
+                            // Text(
+                            //   _product != null
+                            //       ? 'Quantity: ${_product!.pquantity}'
+                            //       : 'Loading...',
+                            //   style: TextStyle(
+                            //       fontSize: 16.0, color: Colors.black87),
+                            // ),
                           ],
                         ),
                         SizedBox(height: 8.0),

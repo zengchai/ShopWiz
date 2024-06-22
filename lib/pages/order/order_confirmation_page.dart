@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shopwiz/models/order.dart';
+import 'package:shopwiz/pages/order/order_page.dart';
 import 'package:shopwiz/services/auth.dart';
 import 'package:shopwiz/services/reviewservice.dart';
 import 'package:shopwiz/shared/order_item.dart';
@@ -22,16 +23,33 @@ class OrderConfirmationScreen extends StatefulWidget {
 }
 
 class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
+  Future<void> checkStatus(String orderId) async {
+    final AuthService _auth = AuthService();
+
+    final uid = _auth.getCurrentUser().uid;
+    final orderService = Reviewservice(uid: uid);
+    bool status = await orderService.checkStatus(orderId);
+    print(status);
+    if (status) {
+      setState(() {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => OrderScreen()),
+        );
+      });
+    }
+  }
+
   Future<void> _updateOrderStatus(String orderId, String storeId) async {
     final AuthService _auth = AuthService();
 
     final uid = _auth.getCurrentUser().uid;
     final orderService = Reviewservice(uid: uid);
     await orderService.updateReviewStatus(orderId, storeId);
-    setState(() {});
+    await checkStatus(orderId);
   }
 
-  void _showCompletionDialog() {
+  void _showCompletionDialog(orderId, store) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -41,8 +59,12 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
           actions: [
             TextButton(
               onPressed: () {
+                _updateOrderStatus(orderId, store.storeId);
+                setState(() {
+                  store.update("Received");
+                });
+                store.getUpdate();
                 Navigator.of(context).pop(); // Close the dialog
-                setState(() {}); // Refresh the screen
               },
               child: Text('OK'),
             ),
@@ -158,12 +180,8 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                                   onPressed: () {
                                     if (widget.status == "Pick Up") {
                                       if (store.status != "Received") {
-                                        _updateOrderStatus(
-                                            widget.orderId, store.storeId);
-                                        setState(() {
-                                          store.update("Received");
-                                        });
-                                        _showCompletionDialog();
+                                        _showCompletionDialog(
+                                            widget.orderId, store);
                                       }
                                     }
                                   },
@@ -173,8 +191,8 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                                       horizontal: 15,
                                     ),
                                     backgroundColor:
-                                        widget.status == "Received" &&
-                                                store.status != null
+                                        store.status == "Received" ||
+                                                widget.status == "Received"
                                             ? Colors.grey[300]
                                             : Color.fromARGB(
                                                 255,
