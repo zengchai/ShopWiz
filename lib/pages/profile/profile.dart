@@ -128,269 +128,180 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return currentUid == adminUid
         ? BaseLayoutAdmin(
-            child: Expanded(
-              child: FutureBuilder<Map<String, dynamic>>(
-                future: _userDataFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}'),
-                    );
-                  } else {
-                    final userData = snapshot.data!;
-                    String currentUid = userData['uid'];
-                    return SingleChildScrollView(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(16.0, 15.0, 16.0, 0.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 16.0),
-                                  child: Text(
-                                    'Profile',
-                                    style: TextStyle(
-                                        fontSize: 25,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 30.0),
-                              Center(
-                                child: CircleAvatar(
-                                  radius: 70.0,
-                                  backgroundImage: AssetImage(
-                                      'assets/images/profile_pic.png'),
-                                ),
-                              ),
-                              SizedBox(height: 30.0),
-                              Container(
-                                width: 350.0,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Username'),
-                                    TextField(
-                                      readOnly: true,
-                                      controller: TextEditingController(
-                                          text: userData['username'] ?? ''),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.0),
-                                    Text('Email'),
-                                    TextField(
-                                      readOnly: true,
-                                      controller: TextEditingController(
-                                          text: userData['email'] ?? ''),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.0),
-                                    SizedBox(height: 16.0),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 100.0),
-                              Container(
-                                width: 150.0,
-                                height: 50,
-                                child: ElevatedButton(
-                                  onPressed: signOut,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  child: Text(
-                                    'Sign Out',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: _userDataFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                } else {
+                  final userData = snapshot.data!;
+                  return buildProfileContent(userData, isAdmin: true);
+                }
+              },
             ),
           )
         : BaseLayout(
-            child: Expanded(
-              child: FutureBuilder<Map<String, dynamic>>(
-                future: _userDataFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}'),
-                    );
-                  } else {
-                    final userData = snapshot.data!;
-                    String currentUid = userData['uid'];
-                    return SingleChildScrollView(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(16.0, 15.0, 16.0, 0.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 16.0),
-                                  child: Text(
-                                    'Profile',
-                                    style: TextStyle(
-                                        fontSize: 25,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 30.0),
-                              Center(
-                                child: CircleAvatar(
-                                  radius: 70.0,
-                                  backgroundImage: userData['imageUrl'] != null
-                                      ? NetworkImage(userData['imageUrl'])
-                                          as ImageProvider
-                                      : AssetImage(
-                                          'assets/images/default_profile_image.jpg'),
-                                ),
-                              ),
-                              SizedBox(height: 30.0),
-                              Container(
-                                width: 350.0,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Username'),
-                                    TextField(
-                                      readOnly: true,
-                                      controller: TextEditingController(
-                                          text: userData['username'] ?? ''),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.0),
-                                    Text('Email'),
-                                    TextField(
-                                      readOnly: true,
-                                      controller: TextEditingController(
-                                          text: userData['email'] ?? ''),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.0),
-                                    Text('Phone Number'),
-                                    TextField(
-                                      readOnly: true,
-                                      controller: TextEditingController(
-                                          text: userData['phonenum'] ?? ''),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16.0),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 20.0),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 150.0,
-                                    height: 50,
-                                    child: ElevatedButton(
-                                      onPressed: editProfile,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            Color.fromARGB(255, 108, 74, 255),
-                                      ),
-                                      child: Text(
-                                        'Edit Profile',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 20),
-                                  Container(
-                                    width: 150.0,
-                                    height: 50,
-                                    child: ElevatedButton(
-                                      onPressed: () => deleteProfile(context),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                      ),
-                                      child: Text(
-                                        'Delete Account',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 16.0),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 320.0,
-                                    height: 50,
-                                    child: ElevatedButton(
-                                      onPressed: signOut,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            Color.fromARGB(255, 122, 122, 122),
-                                      ),
-                                      child: Text(
-                                        'Sign Out',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: _userDataFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                } else {
+                  final userData = snapshot.data!;
+                  return buildProfileContent(userData, isAdmin: false);
+                }
+              },
+            ),
+          );
+  }
+
+  Widget buildProfileContent(Map<String, dynamic> userData,
+      {required bool isAdmin}) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.0, 15.0, 16.0, 0.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: Text(
+                    'Profile',
+                    style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              SizedBox(height: 30.0),
+              Center(
+                child: CircleAvatar(
+                  radius: 70.0,
+                  backgroundImage: userData['imageUrl'] != null
+                      ? NetworkImage(userData['imageUrl']) as ImageProvider
+                      : AssetImage('assets/images/profile_pic.png'),
+                ),
+              ),
+              SizedBox(height: 30.0),
+              Container(
+                width: 350.0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Username'),
+                    TextField(
+                      readOnly: true,
+                      controller: TextEditingController(
+                          text: userData['username'] ?? ''),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+                    Text('Email'),
+                    TextField(
+                      readOnly: true,
+                      controller:
+                          TextEditingController(text: userData['email'] ?? ''),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+                    if (!isAdmin) ...[
+                      Text('Phone Number'),
+                      TextField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                            text: userData['phonenum'] ?? ''),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0),
                           ),
                         ),
                       ),
-                    );
-                  }
-                },
+                      SizedBox(height: 16.0),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          );
+              SizedBox(height: 20.0),
+              if (!isAdmin)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 150.0,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: editProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color.fromARGB(255, 108, 74, 255),
+                        ),
+                        child: Text(
+                          'Edit Profile',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 20),
+                    Container(
+                      width: 150.0,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => deleteProfile(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: Text(
+                          'Delete Account',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              SizedBox(height: 16.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 320.0,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: signOut,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(255, 122, 122, 122),
+                      ),
+                      child: Text(
+                        'Sign Out',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
